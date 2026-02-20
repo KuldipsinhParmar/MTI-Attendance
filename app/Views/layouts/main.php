@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><?= esc($pageTitle ?? 'MTI Attendance') ?> — MTI Attendance</title>
+    <!-- Bootstrap 5 -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+    <!-- DataTables + Bootstrap 5 skin -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.bootstrap5.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <?php if (strpos(current_url(), '/map') !== false || strpos(current_url(), '/dashboard') !== false || strpos(current_url(), '/qr-codes/show') !== false || strpos(current_url(), '/qr-codes/edit') !== false || strpos(current_url(), '/qr-codes/create') !== false): ?>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+    <?php endif; ?>
+    <link rel="stylesheet" href="<?= base_url('assets/css/style.css') ?>">
+</head>
+<body>
+
+<div class="d-flex">
+    <!-- ── Sidebar ────────────────────────────────── -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-brand">
+            <div class="brand-icon"><i class="bi bi-qr-code-scan"></i></div>
+            <div>
+                <div class="brand-name">MTI</div>
+                <div class="brand-sub">Attendance</div>
+            </div>
+        </div>
+
+        <nav class="sidebar-nav">
+            <a href="<?= base_url('dashboard') ?>" class="nav-link <?= strpos(current_url(), '/dashboard') !== false ? 'active' : '' ?>">
+                <i class="bi bi-grid-1x2-fill"></i><span>Dashboard</span>
+            </a>
+            <a href="<?= base_url('employees') ?>" class="nav-link <?= strpos(current_url(), '/employees') !== false ? 'active' : '' ?>">
+                <i class="bi bi-people-fill"></i><span>Employees</span>
+            </a>
+            <a href="<?= base_url('qr-codes') ?>" class="nav-link <?= strpos(current_url(), '/qr-codes') !== false ? 'active' : '' ?>">
+                <i class="bi bi-qr-code"></i><span>QR Codes</span>
+            </a>
+            <a href="<?= base_url('attendance') ?>" class="nav-link <?= strpos(current_url(), '/attendance') !== false ? 'active' : '' ?>">
+                <i class="bi bi-calendar-check-fill"></i><span>Attendance</span>
+            </a>
+            <a href="<?= base_url('reports') ?>" class="nav-link <?= strpos(current_url(), '/reports') !== false ? 'active' : '' ?>">
+                <i class="bi bi-bar-chart-fill"></i><span>Reports</span>
+            </a>
+            <a href="<?= base_url('map') ?>" class="nav-link <?= strpos(current_url(), '/map') !== false ? 'active' : '' ?>">
+                <i class="bi bi-geo-alt-fill"></i><span>Live Map</span>
+            </a>
+            <hr class="sidebar-divider">
+            <a href="<?= base_url('settings') ?>" class="nav-link <?= strpos(current_url(), '/settings') !== false ? 'active' : '' ?>">
+                <i class="bi bi-gear-fill"></i><span>Settings</span>
+            </a>
+            <a href="<?= base_url('logout') ?>" class="nav-link nav-logout">
+                <i class="bi bi-box-arrow-right"></i><span>Logout</span>
+            </a>
+        </nav>
+    </aside>
+
+    <!-- ── Main Wrapper ───────────────────────────── -->
+    <div class="main-wrapper flex-grow-1">
+        <!-- Topbar -->
+        <nav class="navbar topbar px-3 py-0">
+            <button class="btn btn-sm btn-light me-2 sidebar-toggle-btn" id="sidebarToggle">
+                <i class="bi bi-list fs-5"></i>
+            </button>
+            <span class="fw-semibold text-dark"><?= esc($pageTitle ?? '') ?></span>
+            <div class="ms-auto d-flex align-items-center gap-2">
+                <span class="badge bg-light text-dark border px-3 py-2">
+                    <i class="bi bi-person-circle me-1"></i><?= session()->get('admin_name') ?>
+                </span>
+            </div>
+        </nav>
+
+        <!-- Flash messages -->
+        <div class="px-4 pt-3">
+            <?php if (session()->getFlashdata('success')): ?>
+                <div class="alert alert-success alert-dismissible fade show d-flex align-items-center gap-2" role="alert">
+                    <i class="bi bi-check-circle-fill"></i> <?= session()->getFlashdata('success') ?>
+                    <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert"></button>
+                </div>
+            <?php endif; ?>
+            <?php if (session()->getFlashdata('error')): ?>
+                <div class="alert alert-danger alert-dismissible fade show d-flex align-items-center gap-2" role="alert">
+                    <i class="bi bi-exclamation-circle-fill"></i> <?= session()->getFlashdata('error') ?>
+                    <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert"></button>
+                </div>
+            <?php endif; ?>
+        </div>
+
+        <!-- Page Content -->
+        <main class="content px-4 pb-4">
+            <?= $this->renderSection('content') ?>
+        </main>
+    </div>
+</div>
+
+<!-- Scripts -->
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<?php if (strpos(current_url(), '/map') !== false || strpos(current_url(), '/dashboard') !== false || strpos(current_url(), '/qr-codes/show') !== false || strpos(current_url(), '/qr-codes/edit') !== false || strpos(current_url(), '/qr-codes/create') !== false): ?>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<?php endif; ?>
+<!-- DataTables -->
+<script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.bootstrap5.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.print.min.js"></script>
+<script src="<?= base_url('assets/js/app.js') ?>"></script>
+</body>
+</html>
