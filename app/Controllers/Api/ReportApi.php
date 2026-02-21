@@ -29,7 +29,17 @@ class ReportApi extends ResourceController
         $month  = $this->request->getGet('month')  ?? date('Y-m');
         $format = $this->request->getGet('format') ?? 'csv';
 
-        // Redirect to web export (CSV handled by web controller)
-        return redirect()->to("/reports/export-csv?month={$month}");
+        // Return a JSON response with the download URL (redirect breaks mobile API clients)
+        $baseUrl    = rtrim(base_url(), '/');
+        $exportUrl  = "{$baseUrl}/reports/export-csv?month={$month}";
+
+        return $this->respond([
+            'status'      => 'success',
+            'export_url'  => $exportUrl,
+            'month'       => $month,
+            'type'        => $type,
+            'format'      => $format,
+            'note'        => 'Open export_url in a browser or authenticated WebView to download the CSV file.',
+        ]);
     }
 }

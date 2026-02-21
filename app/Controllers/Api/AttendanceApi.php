@@ -45,7 +45,7 @@ class AttendanceApi extends ResourceController
         // Geofence check
         $geofenceStatus = 'inside';
         $message        = null;
-        $radius         = $qr['geofence_radius'] ?: (int)$settings->get('default_geofence_radius', 50);
+        $radius         = $qr['geofence_radius'] ?: (int)$settings->getSetting('default_geofence_radius', 50);
 
         if ($scanLat && $scanLng && $qr['latitude'] && $qr['longitude']) {
             $distance = $this->haversine(

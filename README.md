@@ -69,7 +69,7 @@ docker exec -it mti_attendance_app php spark db:seed AttendanceSeeder
 ### Default Admin Login
 ```
 Email:    admin@mti.com
-Password: admin123
+Password: give me 
 ```
 
 ---
