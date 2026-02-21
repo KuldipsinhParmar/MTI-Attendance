@@ -8,7 +8,6 @@ use CodeIgniter\RESTful\ResourceController;
 class EmployeeApi extends ResourceController
 {
     protected $format = 'json';
-    protected EmployeeModel $model;
 
     public function __construct()
     {

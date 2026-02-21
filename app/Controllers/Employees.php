@@ -46,6 +46,8 @@ class Employees extends BaseController
             'name'        => 'required|min_length[2]',
             'department'  => 'required',
             'designation' => 'required',
+            'username'    => 'required|min_length[3]|is_unique[employees.username]',
+            'password'    => 'required|min_length[6]',
         ];
 
         if (!$this->validate($rules)) {
@@ -68,8 +70,11 @@ class Employees extends BaseController
             'department'    => $this->request->getPost('department'),
             'designation'   => $this->request->getPost('designation'),
             'join_date'     => $this->request->getPost('join_date'),
-            'photo'         => $photo,
-            'is_active'     => 1,
+            'photo'                     => $photo,
+            'is_active'                 => 1,
+            'username'                  => strtolower(trim($this->request->getPost('username'))),
+            'password'                  => password_hash($this->request->getPost('password'), PASSWORD_BCRYPT),
+            'allow_anywhere_attendance' => $this->request->getPost('allow_anywhere_attendance') ? 1 : 0,
         ]);
 
         return redirect()->to('/employees')->with('success', 'Employee added successfully.');
@@ -86,7 +91,11 @@ class Employees extends BaseController
 
     public function update(int $id)
     {
-        $rules = ['name' => 'required|min_length[2]'];
+        $emp = $this->model->find($id);
+        $rules = [
+            'name'     => 'required|min_length[2]',
+            'username' => "required|min_length[3]|is_unique[employees.username,id,{$id}]",
+        ];
         if (!$this->validate($rules)) {
             return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
         }
@@ -95,10 +104,21 @@ class Employees extends BaseController
             'name'        => $this->request->getPost('name'),
             'email'       => $this->request->getPost('email'),
             'phone'       => $this->request->getPost('phone'),
-            'department'  => $this->request->getPost('department'),
-            'designation' => $this->request->getPost('designation'),
-            'join_date'   => $this->request->getPost('join_date'),
+            'department'                => $this->request->getPost('department'),
+            'designation'               => $this->request->getPost('designation'),
+            'join_date'                 => $this->request->getPost('join_date'),
+            'username'                  => strtolower(trim($this->request->getPost('username'))),
+            'allow_anywhere_attendance' => $this->request->getPost('allow_anywhere_attendance') ? 1 : 0,
         ];
+
+        // Only update password if a new one was entered
+        $newPass = trim($this->request->getPost('password') ?? '');
+        if (!empty($newPass)) {
+            if (strlen($newPass) < 6) {
+                return redirect()->back()->withInput()->with('errors', ['password' => 'Password must be at least 6 characters.']);
+            }
+            $data['password'] = password_hash($newPass, PASSWORD_BCRYPT);
+        }
 
         $file = $this->request->getFile('photo');
         if ($file && $file->isValid()) {

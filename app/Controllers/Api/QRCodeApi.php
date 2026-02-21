@@ -8,7 +8,6 @@ use CodeIgniter\RESTful\ResourceController;
 class QRCodeApi extends ResourceController
 {
     protected $format = 'json';
-    protected QRTokenModel $model;
 
     public function __construct()
     {

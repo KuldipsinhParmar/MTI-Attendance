@@ -48,6 +48,10 @@ $routes->group('', ['filter' => 'auth'], function ($routes) {
 
 // REST API (used by mobile app — no session needed)
 $routes->group('api', function ($routes) {
+    // Auth
+    $routes->post('auth/login',        'Api\AuthApi::login');
+    $routes->post('auth/set-password', 'Api\AuthApi::setPassword');
+
     $routes->post('attendance/scan',     'Api\AttendanceApi::scan');
     $routes->get('attendance/today',     'Api\AttendanceApi::today');
     $routes->get('attendance/history',   'Api\AttendanceApi::history');

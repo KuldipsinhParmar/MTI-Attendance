@@ -2,8 +2,9 @@
 
 > **Base URL:** `http://<your-server>/api`
 > **Local Dev:** `http://localhost:8082/api`
+> **Live Server:** `https://attendance.marutitechinnovation.in/api`
 > **Format:** All requests and responses use `Content-Type: application/json`
-> **Auth:** No API key currently required (open REST endpoints — consider adding an API key filter for production)
+> **Auth:** Employee login uses username + password (bcrypt). No API key on other endpoints — consider adding one for production.
 
 ---
 
@@ -19,14 +20,115 @@
 
 ## 📋 Table of Contents
 
-1. [Attendance APIs](#1-attendance-apis)
-2. [Employee APIs](#2-employee-apis)
-3. [QR Code APIs](#3-qr-code-apis)
-4. [Report APIs](#4-report-apis)
-5. [Map / Live View API](#5-map--live-view-api)
-6. [Error Response Format](#6-error-response-format)
-7. [Data Models Reference](#7-data-models-reference)
-8. [Flutter Integration Guide](#8-flutter-integration-guide)
+1. [Auth APIs](#0-auth-apis)
+2. [Attendance APIs](#1-attendance-apis)
+3. [Employee APIs](#2-employee-apis)
+4. [QR Code APIs](#3-qr-code-apis)
+5. [Report APIs](#4-report-apis)
+6. [Map / Live View API](#5-map--live-view-api)
+7. [Error Response Format](#6-error-response-format)
+8. [Data Models Reference](#7-data-models-reference)
+9. [Flutter Integration Guide](#8-flutter-integration-guide)
+
+---
+
+## 0. Auth APIs
+
+Used by the **mobile app** to authenticate employees. Credentials (username + bcrypt password) are managed from the **web admin panel** (Employees → Create/Edit).
+
+---
+
+### 0.1 Employee Login
+
+| Field | Value |
+|-------|-------|
+| **URL** | `POST /api/auth/login` |
+| **Auth** | None required |
+
+#### Request Body (JSON)
+
+```json
+{
+  "username": "john.doe",
+  "password": "secret123"
+}
+```
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `username` | `string` | ✅ Yes | Employee's login username (set by admin) |
+| `password` | `string` | ✅ Yes | Plain-text password (compared against bcrypt hash) |
+
+#### Response — Success (200 OK)
+
+```json
+{
+  "status": "success",
+  "message": "Login successful.",
+  "data": {
+    "id": 1,
+    "employee_code": "EMP0001",
+    "username": "john.doe",
+    "name": "John Doe",
+    "email": "john@mti.com",
+    "phone": "9876543210",
+    "department": "Engineering",
+    "designation": "Developer",
+    "photo": null
+  }
+}
+```
+
+#### Error Responses
+
+| HTTP Code | Reason |
+|-----------|--------|
+| `401` | Invalid username or password |
+| `403` | Account not activated (password not set by admin yet) |
+| `422` | Missing `username` or `password` field |
+
+---
+
+### 0.2 Set / Reset Employee Password *(Admin Use)*
+
+Used by admins to provision or reset an employee's login credentials. Can also be done via the **web admin panel**.
+
+| Field | Value |
+|-------|-------|
+| **URL** | `POST /api/auth/set-password` |
+| **Auth** | None required *(protect this in production!)* |
+
+#### Request Body (JSON)
+
+```json
+{
+  "employee_code": "EMP0001",
+  "username": "john.doe",
+  "password": "newpassword123"
+}
+```
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `employee_code` | `string` | ✅ Yes | Employee's system code (e.g. `EMP0001`) |
+| `username` | `string` | ✅ Yes | New or existing username |
+| `password` | `string` | ✅ Yes | Plain-text password (min 6 chars, stored as bcrypt) |
+
+#### Response — Success (200 OK)
+
+```json
+{
+  "status": "success",
+  "message": "Credentials updated successfully."
+}
+```
+
+#### Error Responses
+
+| HTTP Code | Reason |
+|-----------|--------|
+| `404` | Employee not found |
+| `422` | Missing field or password < 6 chars |
 
 ---
 
@@ -728,6 +830,9 @@ All errors follow the CodeIgniter 4 ResourceController standard format:
 | `photo` | `string` | Yes | Photo file path/URL |
 | `join_date` | `date` | Yes | `YYYY-MM-DD` |
 | `is_active` | `integer` | No | `1` = active, `0` = deactivated |
+| `allow_anywhere_attendance` | `integer` | No | `1` = bypass geofence warnings |
+| `username` | `string` | Yes | Login username for mobile app (unique) |
+| `password` | `string` | Yes | bcrypt-hashed password *(never returned in API responses)* |
 | `created_at` | `datetime` | Yes | Auto-set |
 | `updated_at` | `datetime` | Yes | Auto-updated |
 
@@ -930,6 +1035,8 @@ MobileScanner(
 
 | Method | URL | Description |
 |--------|-----|-------------|
+| `POST` | `/api/auth/login` | **Employee login** (username + password) |
+| `POST` | `/api/auth/set-password` | Set/reset employee password (admin) |
 | `POST` | `/api/attendance/scan` | Scan QR → check-in or check-out |
 | `GET` | `/api/attendance/today?employee_id=` | Today's records for employee |
 | `GET` | `/api/attendance/history?employee_id=&from=&to=` | History with date range |
@@ -952,12 +1059,14 @@ MobileScanner(
 ### 8.7 ⚠️ Important Notes for Flutter Developer
 
 1. **Base URL on device:** Use your machine's **local IP** (e.g. `192.168.1.100`) — NOT `localhost` — when testing on a physical Android/iOS device.
-2. **QR token value:** The QR code should encode **only the token string** (32 hex chars). Do NOT encode full URL — just the token.
-3. **employee_id:** The app should store/select the `id` from the `/api/employees` response — NOT the `employee_code` string.
-4. **Geofence:** Always send GPS coordinates if possible — the server handles geofence validation automatically.
-5. **Check-in logic is automatic:** The server automatically determines `check_in` vs `check_out` by checking the last scan today. No need to send `type` in the request.
-6. **No JWT / token auth currently:** All API endpoints are public. For production, consider adding an `X-Api-Key` header and a filter on the API route group.
+2. **Login first:** Always call `POST /api/auth/login` on app start. Store the returned `id`, `name`, `employee_code` etc. in `SharedPreferences`.
+3. **QR token value:** The QR code should encode **only the token string** (32 hex chars). Do NOT encode full URL — just the token.
+4. **employee_id for scanning:** Use the `id` returned from the login response — NOT the `employee_code` string.
+5. **Geofence:** Always send GPS coordinates if possible — the server handles geofence validation automatically.
+6. **Check-in logic is automatic:** The server automatically determines `check_in` vs `check_out` by checking the last scan today. No need to send `type` in the request.
+7. **Password never returned:** The `password` field is never included in any API response — only `username` is included in the login response `data`.
+8. **No JWT / token auth currently:** All API endpoints are public. For production, consider adding an `X-Api-Key` header and a filter on the API route group.
 
 ---
 
-*Generated: 2026-02-21 | MTI Attendance System v1.0*
+*Updated: 2026-02-21 | MTI Attendance System v1.1 — Added Auth (Username + Password login)*

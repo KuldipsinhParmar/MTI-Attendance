@@ -63,6 +63,63 @@
                     <?php endif; ?>
                 </div>
             </div>
+
+            <hr class="my-4">
+            <h6 class="fw-semibold text-primary mb-3">
+                <i class="bi bi-phone me-2"></i>App Login Credentials
+            </h6>
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label fw-medium">
+                        Username <span class="text-danger">*</span>
+                    </label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-person-badge"></i></span>
+                        <input type="text" name="username" class="form-control"
+                               placeholder="e.g. rahul.sharma"
+                               autocomplete="username"
+                               value="<?= esc(old('username', $employee['username'] ?? '')) ?>"
+                               required>
+                    </div>
+                    <div class="form-text">Employee uses this to log into the mobile app.</div>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-medium">
+                        Password
+                        <?php if (!$employee): ?>
+                            <span class="text-danger">*</span>
+                        <?php else: ?>
+                            <span class="text-muted fw-normal fs-6">(leave blank to keep current)</span>
+                        <?php endif; ?>
+                    </label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-lock"></i></span>
+                        <input type="password" name="password" class="form-control"
+                               placeholder="Min. 6 characters"
+                               autocomplete="new-password"
+                               <?= !$employee ? 'required' : '' ?>>
+                        <button type="button" class="btn btn-outline-secondary"
+                                onclick="togglePw(this)" title="Show/hide password">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row g-3 mt-2">
+                <div class="col-md-12">
+                    <div class="form-check form-switch bg-light p-3 rounded border">
+                        <input class="form-check-input ms-0 me-3 mt-1" type="checkbox" role="switch" id="allow_anywhere_attendance" name="allow_anywhere_attendance" value="1" <?= old('allow_anywhere_attendance', $employee['allow_anywhere_attendance'] ?? 0) ? 'checked' : '' ?> style="transform: scale(1.3);">
+                        <label class="form-check-label fw-medium text-dark" for="allow_anywhere_attendance">
+                            Allow Anywhere Attendance
+                            <div class="text-muted fw-normal fs-6" style="margin-top: 2px;">
+                                If enabled, this employee can scan QR codes from any location without triggering distance warnings.
+                            </div>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
             <div class="d-flex gap-2 mt-4">
                 <a href="<?= base_url('employees') ?>" class="btn btn-secondary">
                     <i class="bi bi-x-lg me-1"></i> Cancel
@@ -75,4 +132,19 @@
         </form>
     </div>
 </div>
+
+<script>
+function togglePw(btn) {
+    const input = btn.closest('.input-group').querySelector('input[type="password"], input[type="text"]');
+    const icon  = btn.querySelector('i');
+    if (input.type === 'password') {
+        input.type = 'text';
+        icon.className = 'bi bi-eye-slash';
+    } else {
+        input.type = 'password';
+        icon.className = 'bi bi-eye';
+    }
+}
+</script>
 <?= $this->endSection() ?>
+

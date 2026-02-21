@@ -32,26 +32,26 @@
         </div>
 
         <nav class="sidebar-nav">
-            <a href="<?= base_url('dashboard') ?>" class="nav-link <?= strpos(current_url(), '/dashboard') !== false ? 'active' : '' ?>">
+            <a href="<?= base_url('dashboard') ?>" class="nav-link <?= url_is('dashboard*') ? 'active' : '' ?>">
                 <i class="bi bi-grid-1x2-fill"></i><span>Dashboard</span>
             </a>
-            <a href="<?= base_url('employees') ?>" class="nav-link <?= strpos(current_url(), '/employees') !== false ? 'active' : '' ?>">
+            <a href="<?= base_url('employees') ?>" class="nav-link <?= url_is('employees*') ? 'active' : '' ?>">
                 <i class="bi bi-people-fill"></i><span>Employees</span>
             </a>
-            <a href="<?= base_url('qr-codes') ?>" class="nav-link <?= strpos(current_url(), '/qr-codes') !== false ? 'active' : '' ?>">
+            <a href="<?= base_url('qr-codes') ?>" class="nav-link <?= url_is('qr-codes*') ? 'active' : '' ?>">
                 <i class="bi bi-qr-code"></i><span>QR Codes</span>
             </a>
-            <a href="<?= base_url('attendance') ?>" class="nav-link <?= strpos(current_url(), '/attendance') !== false ? 'active' : '' ?>">
+            <a href="<?= base_url('attendance') ?>" class="nav-link <?= url_is('attendance*') ? 'active' : '' ?>">
                 <i class="bi bi-calendar-check-fill"></i><span>Attendance</span>
             </a>
-            <a href="<?= base_url('reports') ?>" class="nav-link <?= strpos(current_url(), '/reports') !== false ? 'active' : '' ?>">
+            <a href="<?= base_url('reports') ?>" class="nav-link <?= url_is('reports*') ? 'active' : '' ?>">
                 <i class="bi bi-bar-chart-fill"></i><span>Reports</span>
             </a>
-            <a href="<?= base_url('map') ?>" class="nav-link <?= strpos(current_url(), '/map') !== false ? 'active' : '' ?>">
+            <a href="<?= base_url('map') ?>" class="nav-link <?= url_is('map*') ? 'active' : '' ?>">
                 <i class="bi bi-geo-alt-fill"></i><span>Live Map</span>
             </a>
             <hr class="sidebar-divider">
-            <a href="<?= base_url('settings') ?>" class="nav-link <?= strpos(current_url(), '/settings') !== false ? 'active' : '' ?>">
+            <a href="<?= base_url('settings') ?>" class="nav-link <?= url_is('settings*') ? 'active' : '' ?>">
                 <i class="bi bi-gear-fill"></i><span>Settings</span>
             </a>
             <a href="<?= base_url('logout') ?>" class="nav-link nav-logout">

@@ -47,14 +47,17 @@ class AttendanceApi extends ResourceController
         $message        = null;
         $radius         = $qr['geofence_radius'] ?: (int)$settings->getSetting('default_geofence_radius', 50);
 
-        if ($scanLat && $scanLng && $qr['latitude'] && $qr['longitude']) {
-            $distance = $this->haversine(
-                (float)$qr['latitude'], (float)$qr['longitude'],
-                (float)$scanLat,        (float)$scanLng
-            );
-            if ($distance > $radius) {
-                $geofenceStatus = 'flagged';
-                $message = "You are " . round($distance) . "m away from {$qr['location_name']} (allowed: {$radius}m). Attendance marked but flagged for review.";
+        // Skip geofence check if employee has the "allow anywhere" flag
+        if (empty($employee['allow_anywhere_attendance'])) {
+            if ($scanLat && $scanLng && $qr['latitude'] && $qr['longitude']) {
+                $distance = $this->haversine(
+                    (float)$qr['latitude'], (float)$qr['longitude'],
+                    (float)$scanLat,        (float)$scanLng
+                );
+                if ($distance > $radius) {
+                    $geofenceStatus = 'flagged';
+                    $message = "You are " . round($distance) . "m away from {$qr['location_name']} (allowed: {$radius}m). Attendance marked but flagged for review.";
+                }
             }
         }
 

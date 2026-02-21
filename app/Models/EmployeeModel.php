@@ -11,6 +11,7 @@ class EmployeeModel extends Model
     protected $allowedFields = [
         'employee_code', 'name', 'email', 'phone',
         'department', 'designation', 'photo', 'join_date', 'is_active',
+        'username', 'password', 'allow_anywhere_attendance'
     ];
     protected $useTimestamps = true;
 
