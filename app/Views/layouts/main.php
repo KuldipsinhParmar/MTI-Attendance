@@ -47,9 +47,7 @@
             <a href="<?= base_url('reports') ?>" class="nav-link <?= url_is('reports*') ? 'active' : '' ?>">
                 <i class="bi bi-bar-chart-fill"></i><span>Reports</span>
             </a>
-            <a href="<?= base_url('map') ?>" class="nav-link <?= url_is('map*') ? 'active' : '' ?>">
-                <i class="bi bi-geo-alt-fill"></i><span>Live Map</span>
-            </a>
+
             <hr class="sidebar-divider">
             <a href="<?= base_url('settings') ?>" class="nav-link <?= url_is('settings*') ? 'active' : '' ?>">
                 <i class="bi bi-gear-fill"></i><span>Settings</span>

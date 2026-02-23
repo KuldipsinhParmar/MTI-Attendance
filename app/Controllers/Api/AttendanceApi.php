@@ -61,14 +61,27 @@ class AttendanceApi extends ResourceController
             }
         }
 
-        // Determine scan type (toggle: check_in ↔ check_out)
-        $type = $attModel->getNextScanType($employeeId);
+        // Determine next scan type:
+        //   • If the app sends an explicit 'scan_type' — honour it (user chose their action)
+        //   • Otherwise fall back to server-side auto-detection
+        $validTypes    = ['check_in', 'break_start', 'break_end', 'check_out'];
+        $requestedType = $body['scan_type'] ?? null;
+
+        if ($requestedType && in_array($requestedType, $validTypes, true)) {
+            $type  = $requestedType;
+            $label = AttendanceModel::LABELS[$type];
+        } else {
+            $nextScan = $attModel->getNextScan($employeeId);
+            $type     = $nextScan['type'];
+            $label    = $nextScan['label'];
+        }
 
         // Save attendance
         $attModel->insert([
             'employee_id'     => $employeeId,
             'qr_token_id'     => $qr['id'],
             'type'            => $type,
+            'scan_label'      => $label,
             'scan_latitude'   => $scanLat,
             'scan_longitude'  => $scanLng,
             'geofence_status' => $geofenceStatus,
@@ -76,9 +89,11 @@ class AttendanceApi extends ResourceController
             'date'            => date('Y-m-d'),
         ]);
 
+
         return $this->respond([
             'status'          => $geofenceStatus === 'flagged' ? 'flagged' : 'success',
             'type'            => $type,
+            'label'           => $label,
             'employee'        => $employee['name'],
             'employee_code'   => $employee['employee_code'],
             'location'        => $qr['location_name'],

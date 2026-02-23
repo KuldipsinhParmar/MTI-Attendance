@@ -40,25 +40,37 @@
                     <th>Code</th>
                     <th>Name</th>
                     <th>Department</th>
-                    <th>Check-In</th>
-                    <th>Check-Out</th>
-                    <th>Duration</th>
+                    <th><i class="bi bi-box-arrow-in-right text-success me-1"></i>Shift In</th>
+                    <th><i class="bi bi-cup-hot text-warning me-1"></i>Break</th>
+                    <th><i class="bi bi-box-arrow-right text-danger me-1"></i>Shift Out</th>
+                    <th>Net Hours</th>
                     <th>Status</th>
                 </tr>
             </thead>
+
             <tbody>
             <?php foreach ($logs as $row):
-                $in     = $row['check_in']  ? date('h:i A', strtotime($row['check_in']))  : '—';
-                $out    = $row['check_out'] ? date('h:i A', strtotime($row['check_out'])) : '—';
-                $dur    = ($row['check_in'] && $row['check_out'])
-                        ? round((strtotime($row['check_out']) - strtotime($row['check_in'])) / 3600, 1) . 'h'
-                        : '—';
-                $status = !$row['check_in'] ? 'absent' : ($row['geofence_status'] === 'flagged' ? 'flagged' : 'present');
+                $in      = $row['check_in']    ? date('h:i A', strtotime($row['check_in']))   : '—';
+                $brStart = $row['break_start'] ? date('h:i A', strtotime($row['break_start'])): null;
+                $brEnd   = $row['break_end']   ? date('h:i A', strtotime($row['break_end']))  : null;
+                $out     = $row['check_out']   ? date('h:i A', strtotime($row['check_out']))  : '—';
+
+                if ($brStart && $brEnd)       $breakCell = $brStart . ' → ' . $brEnd;
+                elseif ($brStart && !$brEnd)  $breakCell = '<span class="badge bg-warning-subtle text-warning border border-warning-subtle">On Break</span>';
+                else                          $breakCell = '—';
+
+                $netMins = isset($row['net_minutes']) && $row['net_minutes'] > 0 ? (int)$row['net_minutes'] : null;
+                $netDur  = $netMins !== null
+                    ? floor($netMins / 60) . 'h ' . ($netMins % 60 > 0 ? ($netMins % 60) . 'm' : '')
+                    : '—';
+
+                $status = !$row['check_in'] ? 'absent'
+                        : ($row['geofence_status'] === 'flagged' ? 'flagged' : 'present');
                 $badgeClass = match($status) {
                     'present' => 'bg-success-subtle text-success border border-success-subtle',
                     'absent'  => 'bg-danger-subtle text-danger border border-danger-subtle',
                     'flagged' => 'bg-warning-subtle text-warning border border-warning-subtle',
-                    default   => 'bg-secondary-subtle text-secondary'
+                    default   => 'bg-secondary-subtle text-secondary',
                 };
             ?>
             <tr>
@@ -66,11 +78,13 @@
                 <td class="fw-medium"><?= esc($row['name']) ?></td>
                 <td><?= esc($row['department']) ?></td>
                 <td><?= $in ?></td>
+                <td class="small text-muted"><?= $breakCell ?></td>
                 <td><?= $out ?></td>
-                <td><?= $dur ?></td>
+                <td><?= $netDur ?></td>
                 <td><span class="badge <?= $badgeClass ?>"><?= ucfirst($status) ?></span></td>
             </tr>
             <?php endforeach; ?>
+
             </tbody>
         </table>
     </div>

@@ -6,6 +6,18 @@ document.getElementById('sidebarToggle')?.addEventListener('click', function () 
 // ── DataTables (Bootstrap 5 skin) ───────────────────────────
 $(document).ready(function () {
     $('.datatable').each(function () {
+        const tableId = $(this).attr('id');
+
+        // Column-specific settings per table
+        let columnDefs = [{ orderable: false, targets: -1 }];
+
+        // Attendance table: also disable ordering on Break column (index 4 — contains HTML)
+        if (tableId === 'attendance-table') {
+            columnDefs = [
+                { orderable: false, targets: [4, 7] }   // Break col + Status col
+            ];
+        }
+
         $(this).DataTable({
             pageLength: 25,
             lengthMenu: [10, 25, 50, 100],
@@ -55,9 +67,8 @@ $(document).ready(function () {
                 }
             },
 
-            columnDefs: [
-                { orderable: false, targets: -1 }
-            ]
+            columnDefs: columnDefs
         });
     });
 });
+

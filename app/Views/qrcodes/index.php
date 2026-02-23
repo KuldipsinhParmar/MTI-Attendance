@@ -7,6 +7,8 @@
     </a>
 </div>
 
+
+
 <div class="card">
     <div class="card-body p-0">
         <table class="table table-hover datatable mb-0" id="qrcodes-table" width="100%">
@@ -21,10 +23,7 @@
                 </tr>
             </thead>
             <tbody>
-            <?php if (empty($qrcodes)): ?>
-                <tr><td colspan="6" class="text-center text-muted py-4">No QR codes yet. Generate one!</td></tr>
-            <?php else: ?>
-                <?php foreach ($qrcodes as $qr): ?>
+            <?php foreach ($qrcodes as $qr): ?>
                 <tr>
                     <td><i class="bi bi-geo-alt text-primary me-1"></i><?= esc($qr['location_name']) ?></td>
                     <td><code class="small text-muted"><?= substr($qr['token'], 0, 12) ?>…</code></td>
@@ -52,8 +51,7 @@
                         </form>
                     </td>
                 </tr>
-                <?php endforeach; ?>
-            <?php endif; ?>
+            <?php endforeach; ?>
             </tbody>
         </table>
     </div>

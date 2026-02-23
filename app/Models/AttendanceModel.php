@@ -9,13 +9,34 @@ class AttendanceModel extends Model
     protected $table         = 'attendance';
     protected $primaryKey    = 'id';
     protected $allowedFields = [
-        'employee_id', 'qr_token_id', 'type',
+        'employee_id', 'qr_token_id', 'type', 'scan_label',
         'scan_latitude', 'scan_longitude', 'geofence_status',
         'scanned_at', 'date', 'note',
     ];
     protected $useTimestamps = true;
 
-    // ─── Scan Logic ────────────────────────────────────────────────────────────
+    // ─── Scan-type cycle ───────────────────────────────────────────────────────
+    //
+    //  Sequence within a single day:
+    //    (empty / check_out)  → check_in
+    //    check_in             → break_start
+    //    break_start          → break_end
+    //    break_end            → check_out
+    //    check_out            → check_in  (should not normally happen same day)
+    //
+    // If the employee has already checked-out, subsequent scans restart at
+    // check_in so an admin can fix edge-cases without a migration.
+
+    /** Labels shown in the app / API response */
+    public const LABELS = [
+        'check_in'    => 'Shift Start',
+        'break_start' => 'Break Start',
+        'break_end'   => 'Break End',
+        'check_out'   => 'Shift End',
+    ];
+
+    /** The fixed scan cycle */
+    private const CYCLE = ['check_in', 'break_start', 'break_end', 'check_out'];
 
     public function getLastScanToday(int $employeeId): ?array
     {
@@ -25,13 +46,38 @@ class AttendanceModel extends Model
                     ->first();
     }
 
-    public function getNextScanType(int $employeeId): string
+    /**
+     * Returns the NEXT scan type the employee should perform today.
+     * Also returns a human-readable label.
+     *
+     * @return array{type: string, label: string}
+     */
+    public function getNextScan(int $employeeId): array
     {
         $last = $this->getLastScanToday($employeeId);
-        if (!$last || $last['type'] === 'check_out') {
-            return 'check_in';
+
+        if (!$last) {
+            // First scan of the day
+            return ['type' => 'check_in', 'label' => self::LABELS['check_in']];
         }
-        return 'check_out';
+
+        $currentIndex = array_search($last['type'], self::CYCLE, true);
+
+        if ($currentIndex === false || $currentIndex === count(self::CYCLE) - 1) {
+            // Unknown type or already at check_out → restart
+            return ['type' => 'check_in', 'label' => self::LABELS['check_in']];
+        }
+
+        $nextType = self::CYCLE[$currentIndex + 1];
+        return ['type' => $nextType, 'label' => self::LABELS[$nextType]];
+    }
+
+    /**
+     * Backwards-compatible helper used by old code.
+     */
+    public function getNextScanType(int $employeeId): string
+    {
+        return $this->getNextScan($employeeId)['type'];
     }
 
     // ─── Dashboard ──────────────────────────────────────────────────────────────
@@ -61,14 +107,37 @@ class AttendanceModel extends Model
 
     // ─── Reports ────────────────────────────────────────────────────────────────
 
+    /**
+     * Returns one row per employee per date with:
+     *   check_in, break_start, break_end, check_out,
+     *   net_minutes (gross minutes minus break minutes),
+     *   geofence_status
+     */
     public function getDailyLog(string $date, ?int $employeeId = null, ?string $department = null): array
     {
         $db  = \Config\Database::connect();
         $sql = $db->table('employees e')
-                  ->select('e.id, e.employee_code, e.name, e.department,
-                    MIN(CASE WHEN a.type="check_in"  THEN a.scanned_at END) AS check_in,
-                    MAX(CASE WHEN a.type="check_out" THEN a.scanned_at END) AS check_out,
-                    MAX(a.geofence_status) AS geofence_status')
+                  ->select("
+                    e.id, e.employee_code, e.name, e.department,
+                    MIN(CASE WHEN a.type = 'check_in'    THEN a.scanned_at END) AS check_in,
+                    MIN(CASE WHEN a.type = 'break_start' THEN a.scanned_at END) AS break_start,
+                    MAX(CASE WHEN a.type = 'break_end'   THEN a.scanned_at END) AS break_end,
+                    MAX(CASE WHEN a.type = 'check_out'   THEN a.scanned_at END) AS check_out,
+                    ROUND(
+                        TIMESTAMPDIFF(MINUTE,
+                            MIN(CASE WHEN a.type = 'check_in'  THEN a.scanned_at END),
+                            MAX(CASE WHEN a.type = 'check_out' THEN a.scanned_at END)
+                        )
+                        -
+                        COALESCE(
+                            TIMESTAMPDIFF(MINUTE,
+                                MIN(CASE WHEN a.type = 'break_start' THEN a.scanned_at END),
+                                MAX(CASE WHEN a.type = 'break_end'   THEN a.scanned_at END)
+                            ), 0
+                        )
+                    ) AS net_minutes,
+                    MAX(a.geofence_status) AS geofence_status
+                  ")
                   ->join('attendance a', "a.employee_id = e.id AND a.date = '$date'", 'left')
                   ->where('e.is_active', 1)
                   ->groupBy('e.id');
@@ -102,18 +171,21 @@ class AttendanceModel extends Model
         $db    = \Config\Database::connect();
         $today = date('Y-m-d');
 
-        // Employees with check_in but no check_out today
+        // Show employees whose LAST scan today is check_in or break_end
+        // (i.e., they are currently "working", not on break or checked out)
         return $db->query("
             SELECT e.name, e.employee_code, q.location_name, q.latitude, q.longitude,
-                   a.scanned_at, a.geofence_status
+                   a.scanned_at, a.geofence_status, a.type AS last_scan_type
             FROM attendance a
             JOIN employees e ON e.id = a.employee_id
             JOIN qr_tokens q ON q.id = a.qr_token_id
-            WHERE a.date = '$today' AND a.type = 'check_in'
+            WHERE a.date = '$today'
+              AND a.type IN ('check_in', 'break_end')
               AND NOT EXISTS (
                 SELECT 1 FROM attendance a2
-                WHERE a2.employee_id = a.employee_id AND a2.date = '$today'
-                  AND a2.type = 'check_out' AND a2.scanned_at > a.scanned_at
+                WHERE a2.employee_id = a.employee_id
+                  AND a2.date = '$today'
+                  AND a2.scanned_at > a.scanned_at
               )
         ")->getResultArray();
     }

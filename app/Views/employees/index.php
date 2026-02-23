@@ -6,23 +6,9 @@
     <a href="<?= base_url('employees/create') ?>" class="btn btn-primary">
         <i class="bi bi-plus-lg me-1"></i> Add Employee
     </a>
-    <form class="d-flex align-items-center gap-2 ms-auto flex-wrap" method="GET">
-        <input type="text" name="search" class="form-control form-control-sm" style="width:180px;"
-               placeholder="Search name or code…" value="<?= esc($searchQuery ?? '') ?>">
-        <select name="department" class="form-select form-select-sm" style="width:160px;">
-            <option value="">All Departments</option>
-            <?php foreach ($departments as $d): ?>
-                <option value="<?= esc($d['department']) ?>"
-                    <?= (($selectedDepartment ?? '') == $d['department']) ? 'selected' : '' ?>>
-                    <?= esc($d['department']) ?>
-                </option>
-            <?php endforeach; ?>
-        </select>
-        <button type="submit" class="btn btn-outline-secondary btn-sm">
-            <i class="bi bi-funnel"></i> Filter
-        </button>
-    </form>
 </div>
+
+
 
 <!-- Table card -->
 <div class="card">
@@ -30,7 +16,6 @@
         <table class="table table-hover datatable mb-0" id="employees-table" width="100%">
             <thead>
                 <tr>
-                    <th>Code</th>
                     <th>Name</th>
                     <th>Department</th>
                     <th>Designation</th>
@@ -39,12 +24,8 @@
                 </tr>
             </thead>
             <tbody>
-            <?php if (empty($employees)): ?>
-                <tr><td colspan="6" class="text-center text-muted py-4">No employees found.</td></tr>
-            <?php else: ?>
-                <?php foreach ($employees as $emp): ?>
+            <?php foreach ($employees as $emp): ?>
                 <tr>
-                    <td><span class="badge bg-primary-subtle text-primary border border-primary-subtle"><?= esc($emp['employee_code']) ?></span></td>
                     <td>
                         <div class="d-flex align-items-center gap-2">
                             <?php if ($emp['photo']): ?>
@@ -71,8 +52,7 @@
                         </form>
                     </td>
                 </tr>
-                <?php endforeach; ?>
-            <?php endif; ?>
+            <?php endforeach; ?>
             </tbody>
         </table>
     </div>
