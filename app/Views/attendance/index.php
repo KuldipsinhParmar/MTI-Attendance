@@ -87,6 +87,18 @@
                 <td><?= $netDur ?></td>
                 <td><span class="badge <?= $badgeClass ?>"><?= ucfirst($status) ?></span></td>
                 <td class="text-end text-nowrap">
+                    <!-- View Button -->
+                    <button type="button" class="btn btn-sm btn-outline-info me-1" title="View Details"
+                            data-bs-toggle="modal" data-bs-target="#viewLogModal"
+                            data-name="<?= esc($row['name']) ?>"
+                            data-date="<?= date('d M Y', strtotime($date)) ?>"
+                            data-in="<?= esc($in) ?>"
+                            data-out="<?= esc($out) ?>"
+                            data-breaks="<?= esc($breakCell) ?>"
+                            data-net="<?= esc($netDur) ?>">
+                        <i class="bi bi-eye"></i>
+                    </button>
+                    <!-- Edit Button -->
                     <a href="<?= base_url('attendance/edit/' . $date . '/' . $row['id']) ?>" 
                        class="btn btn-sm btn-outline-primary no-ajax me-1" title="Edit Logs">
                         <i class="bi bi-pencil-square"></i>
@@ -108,4 +120,59 @@
         </table>
     </div>
 </div>
+
+<!-- View Details Modal -->
+<div class="modal fade" id="viewLogModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header border-bottom-0 pb-0">
+                <h5 class="modal-title fw-semibold text-primary"><i class="bi bi-info-circle me-2"></i>Attendance Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <h6 class="fw-bold mb-1" id="modal-emp-name">Employee Name</h6>
+                    <p class="text-muted small mb-0" id="modal-emp-date">Date</p>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="text-muted">Shift In:</span>
+                    <span class="fw-medium text-success" id="modal-emp-in">--</span>
+                </div>
+                <div class="d-flex justify-content-between mb-2 border-bottom pb-2">
+                    <span class="text-muted">Shift Out:</span>
+                    <span class="fw-medium text-danger" id="modal-emp-out">--</span>
+                </div>
+                <div class="d-flex justify-content-between my-2 py-2">
+                    <span class="text-muted w-50">Break Times:</span>
+                    <span class="fw-medium text-warning text-end w-50" id="modal-emp-breaks">--</span>
+                </div>
+                <div class="d-flex justify-content-between mt-2 pt-2 border-top bg-light p-2 rounded">
+                    <span class="fw-medium">Total Net Hours:</span>
+                    <span class="fw-bold text-dark" id="modal-emp-net">--</span>
+                </div>
+            </div>
+            <div class="modal-footer border-top-0 pt-0">
+                <button type="button" class="btn btn-secondary w-100" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const viewModal = document.getElementById('viewLogModal');
+    if(viewModal) {
+        viewModal.addEventListener('show.bs.modal', function (event) {
+            const button = event.relatedTarget;
+            
+            document.getElementById('modal-emp-name').textContent = button.getAttribute('data-name');
+            document.getElementById('modal-emp-date').textContent = button.getAttribute('data-date');
+            document.getElementById('modal-emp-in').textContent = button.getAttribute('data-in');
+            document.getElementById('modal-emp-out').textContent = button.getAttribute('data-out');
+            document.getElementById('modal-emp-breaks').innerHTML = button.getAttribute('data-breaks') || '—';
+            document.getElementById('modal-emp-net').textContent = button.getAttribute('data-net');
+        });
+    }
+});
+</script>
 <?= $this->endSection() ?>

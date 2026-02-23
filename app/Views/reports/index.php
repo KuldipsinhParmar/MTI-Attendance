@@ -2,16 +2,36 @@
 <?= $this->section('content') ?>
 
 <!-- Filter + Export -->
-<div class="d-flex align-items-center gap-2 mb-3 flex-wrap">
-    <form class="d-flex align-items-center gap-2" method="GET">
-        <input type="month" name="month" class="form-control form-control-sm" value="<?= esc($month) ?>" style="width:160px;">
-        <button type="submit" class="btn btn-primary btn-sm">
-            <i class="bi bi-funnel me-1"></i> Filter
-        </button>
-    </form>
-    <a href="<?= base_url('reports/export-csv?month=' . $month) ?>" class="btn btn-success btn-sm ms-auto">
-        <i class="bi bi-file-earmark-spreadsheet me-1"></i> Export CSV
-    </a>
+<div class="card mb-3">
+    <div class="card-body py-2">
+        <form class="d-flex align-items-center gap-2 flex-wrap" method="GET">
+            <input type="month" name="month" class="form-control form-control-sm" style="width:160px;"
+                   value="<?= esc($month) ?>">
+            <select name="employee_id" class="form-select form-select-sm" style="width:160px;">
+                <option value="">All Employees</option>
+                <?php foreach ($employees as $emp): ?>
+                    <option value="<?= $emp['id'] ?>" <?= (($selectedEmployee ?? '') == $emp['id']) ? 'selected' : '' ?>>
+                        <?= esc($emp['name']) ?>
+                    </option>
+                <?php endforeach; ?>
+            </select>
+            <select name="department" class="form-select form-select-sm" style="width:150px;">
+                <option value="">All Departments</option>
+                <?php foreach ($departments as $d): ?>
+                    <option value="<?= esc($d['department']) ?>"
+                        <?= (($selectedDepartment ?? '') == $d['department']) ? 'selected' : '' ?>>
+                        <?= esc($d['department']) ?>
+                    </option>
+                <?php endforeach; ?>
+            </select>
+            <button type="submit" class="btn btn-primary btn-sm">
+                <i class="bi bi-funnel me-1"></i> Filter
+            </button>
+            <a href="<?= base_url('reports/export-csv?month=' . urlencode($month) . '&employee_id=' . urlencode($selectedEmployee ?? '') . '&department=' . urlencode($selectedDepartment ?? '')) ?>" class="btn btn-success btn-sm ms-auto">
+                <i class="bi bi-file-earmark-spreadsheet me-1"></i> Export CSV
+            </a>
+        </form>
+    </div>
 </div>
 
 <!-- Report Table -->

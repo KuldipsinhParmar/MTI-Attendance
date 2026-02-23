@@ -9,25 +9,41 @@ class Reports extends BaseController
 {
     public function index()
     {
-        $month  = $this->request->getGet('month') ?? date('Y-m');
+        $month      = $this->request->getGet('month') ?? date('Y-m');
+        $employeeId = $this->request->getGet('employee_id') ?: null;
+        if ($employeeId !== null) {
+            $employeeId = (int) $employeeId;
+        }
+        $department = $this->request->getGet('department') ?: null;
+        
         $model  = new AttendanceModel();
-        $report = $model->getMonthlyReport($month);
+        $report = $model->getMonthlyReport($month, $employeeId, $department);
 
         // Calculate working days in month
         $daysInMonth = (int) date('t', strtotime($month . '-01'));
 
         return view('reports/index', [
-            'report'      => $report,
-            'month'       => $month,
-            'daysInMonth' => $daysInMonth,
-            'pageTitle'   => 'Monthly Reports',
+            'report'             => $report,
+            'month'              => $month,
+            'daysInMonth'        => $daysInMonth,
+            'employees'          => (new EmployeeModel())->getActive(),
+            'departments'        => (new EmployeeModel())->getDepartments(),
+            'selectedEmployee'   => $employeeId ?? '',
+            'selectedDepartment' => $department ?? '',
+            'pageTitle'          => 'Monthly Reports',
         ]);
     }
 
     public function exportCsv()
     {
-        $month  = $this->request->getGet('month') ?? date('Y-m');
-        $report = (new AttendanceModel())->getMonthlyReport($month);
+        $month      = $this->request->getGet('month') ?? date('Y-m');
+        $employeeId = $this->request->getGet('employee_id') ?: null;
+        if ($employeeId !== null) {
+            $employeeId = (int) $employeeId;
+        }
+        $department = $this->request->getGet('department') ?: null;
+        
+        $report = (new AttendanceModel())->getMonthlyReport($month, $employeeId, $department);
 
         $filename = 'attendance_' . $month . '.csv';
         header('Content-Type: text/csv');

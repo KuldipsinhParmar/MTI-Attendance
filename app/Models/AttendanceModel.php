@@ -183,7 +183,7 @@ class AttendanceModel extends Model
         return $employees;
     }
 
-    public function getMonthlyReport(string $month): array
+    public function getMonthlyReport(string $month, ?int $employeeId = null, ?string $department = null): array
     {
         // check out missed logs first
         $this->autoCheckoutMissedLogs();
@@ -195,6 +195,14 @@ class AttendanceModel extends Model
         $sql = $db->table('employees e')
                   ->select('e.id, e.employee_code, e.name, e.department')
                   ->where('e.is_active', 1);
+                  
+        if ($employeeId) {
+            $sql->where('e.id', $employeeId);
+        }
+        if ($department) {
+            $sql->where('e.department', $department);
+        }
+        
         $employees = $sql->get()->getResultArray();
 
         $attQuery = $db->table('attendance')
