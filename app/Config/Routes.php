@@ -34,6 +34,8 @@ $routes->group('', ['filter' => 'auth'], function ($routes) {
 
     // Attendance
     $routes->get('attendance',                   'Attendance::index');
+    $routes->get('attendance/edit/(:any)/(:num)', 'Attendance::edit/$1/$2');
+    $routes->post('attendance/update/(:any)/(:num)', 'Attendance::update/$1/$2');
     $routes->post('attendance/delete/(:any)/(:num)', 'Attendance::delete/$1/$2');
 
     // Reports

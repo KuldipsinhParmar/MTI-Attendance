@@ -81,7 +81,11 @@
                 <td><?= $out ?></td>
                 <td><?= $netDur ?></td>
                 <td><span class="badge <?= $badgeClass ?>"><?= ucfirst($status) ?></span></td>
-                <td class="text-end">
+                <td class="text-end text-nowrap">
+                    <a href="<?= base_url('attendance/edit/' . $date . '/' . $row['id']) ?>" 
+                       class="btn btn-sm btn-outline-primary no-ajax me-1" title="Edit Logs">
+                        <i class="bi bi-pencil-square"></i>
+                    </a>
                     <?php if ($status !== 'absent'): ?>
                         <form method="POST" action="<?= base_url('attendance/delete/' . $date . '/' . $row['id']) ?>" class="d-inline"
                               onsubmit="return confirm('Delete all attendance logs for <?= esc($row['name']) ?> on this date?')">
@@ -90,8 +94,6 @@
                                 <i class="bi bi-trash"></i>
                             </button>
                         </form>
-                    <?php else: ?>
-                        —
                     <?php endif; ?>
                 </td>
             </tr>

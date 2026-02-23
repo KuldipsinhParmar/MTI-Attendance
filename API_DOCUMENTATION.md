@@ -160,6 +160,10 @@ Mark attendance by scanning a QR code. The system automatically toggles between 
 | `qr_token` | `string` | ✅ Yes | Token string from the QR code |
 | `latitude` | `float` | ❌ Optional | GPS latitude at scan time |
 | `longitude` | `float` | ❌ Optional | GPS longitude at scan time |
+| `scan_type` | `string` | ❌ Optional | `check_in`, `break_start`, `break_end`, or `check_out`. If omitted, auto-detected. |
+
+#### Full Scan Cycle & Break Flow
+The server tracks each employee's last scan for the day and automatically determines the next expected scan type: `check_in` → `break_start` → `break_end` → `check_out`. If the `scan_type` field is omitted from the request, the server auto-detects the next step based on the last recorded scan. For the mobile app, it's recommended to handle ambiguous states (like going on break vs checking out) client-side and pass `scan_type` explicitly.
 
 #### Response — Success (200 OK)
 
@@ -1063,7 +1067,7 @@ MobileScanner(
 3. **QR token value:** The QR code should encode **only the token string** (32 hex chars). Do NOT encode full URL — just the token.
 4. **employee_id for scanning:** Use the `id` returned from the login response — NOT the `employee_code` string.
 5. **Geofence:** Always send GPS coordinates if possible — the server handles geofence validation automatically.
-6. **Check-in logic is automatic:** The server automatically determines `check_in` vs `check_out` by checking the last scan today. No need to send `type` in the request.
+6. **Scan Types:** Pass `scan_type` (`check_in`, `break_start`, `break_end`, `check_out`) for explicit scan flow. If omitted, the server will try to auto-determine based on previous scans.
 7. **Password never returned:** The `password` field is never included in any API response — only `username` is included in the login response `data`.
 8. **No JWT / token auth currently:** All API endpoints are public. For production, consider adding an `X-Api-Key` header and a filter on the API route group.
 
