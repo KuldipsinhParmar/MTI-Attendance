@@ -285,13 +285,60 @@ body {
 /* ── QR show page ───────────────────────────────────────────── */
 .qr-img { max-width: 240px; width: 100%; }
 
-/* ── Responsive sidebar ─────────────────────────────────────── */
+/* ── Responsive sidebar & Mobile tweaks ───────────────────────── */
 @media (max-width: 768px) {
     .sidebar {
-        width: 64px;
+        position: fixed;
+        left: -var(--sidebar-width);
+        width: var(--sidebar-width);
+        box-shadow: 4px 0 15px rgba(0,0,0,0.2) !important;
+        transition: left 0.3s ease;
     }
-    .brand-name, .brand-sub, .nav-link span { display: none; }
-    .sidebar-brand { justify-content: center; padding: 14px 8px; }
+    .sidebar.show {
+        left: 0;
+    }
+    /* Reset from collapsed state on desktop just in case */
+    .brand-name, .brand-sub, .nav-link span { display: block; }
+    .sidebar-brand { justify-content: flex-start; padding: 18px 16px; }
+    
+    .sidebar-overlay {
+        display: none;
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(0,0,0,0.5);
+        z-index: 90;
+    }
+    .sidebar-overlay.show {
+        display: block;
+    }
+    
+    .topbar .ms-auto {
+        margin-left: auto;
+    }
+}
+@media (max-width: 576px) {
+    .dt-toolbar { 
+        flex-direction: column; 
+        align-items: flex-start !important; 
+    }
+    div.dataTables_filter, div.dataTables_filter input {
+        width: 100%;
+    }
+    .dt-buttons {
+        width: 100%;
+        flex-wrap: wrap;
+    }
+    .dt-footer {
+        flex-direction: column; 
+        align-items: center !important; 
+        justify-content: center !important;
+        text-align: center;
+    }
+    .dt-footer > div {
+        flex-direction: column;
+        justify-content: center;
+        width: 100%;
+    }
 }
 
 /* ================================================================

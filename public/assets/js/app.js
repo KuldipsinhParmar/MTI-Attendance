@@ -1,6 +1,19 @@
 // ── Sidebar toggle ──────────────────────────────────────────
+const sidebar = document.getElementById('sidebar');
+const overlay = document.getElementById('sidebarOverlay');
+
 document.getElementById('sidebarToggle')?.addEventListener('click', function () {
-    document.getElementById('sidebar').classList.toggle('collapsed');
+    if (window.innerWidth <= 768) {
+        sidebar.classList.toggle('show');
+        overlay?.classList.toggle('show');
+    } else {
+        sidebar.classList.toggle('collapsed');
+    }
+});
+
+overlay?.addEventListener('click', function () {
+    sidebar.classList.remove('show');
+    overlay.classList.remove('show');
 });
 
 // ── DataTables (Bootstrap 5 skin) ───────────────────────────

@@ -105,6 +105,18 @@ class AttendanceModel extends Model
         return compact('totalEmp', 'present', 'absent', 'late');
     }
 
+    public function getRecentLogs(int $limit = 5): array
+    {
+        $db = \Config\Database::connect();
+        return $db->table('attendance a')
+                  ->select('a.*, e.name as employee_name, e.employee_code, q.location_name')
+                  ->join('employees e', 'e.id = a.employee_id')
+                  ->join('qr_tokens q', 'q.id = a.qr_token_id', 'left')
+                  ->orderBy('a.scanned_at', 'DESC')
+                  ->limit($limit)
+                  ->get()->getResultArray();
+    }
+
     // ─── Reports ────────────────────────────────────────────────────────────────
 
     public function getDailyLog(string $date, ?int $employeeId = null, ?string $department = null): array

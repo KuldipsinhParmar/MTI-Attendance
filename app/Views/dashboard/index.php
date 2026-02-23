@@ -62,13 +62,73 @@
     <div class="col-xl-8">
         <div class="card h-100">
             <div class="card-header d-flex align-items-center justify-content-between">
-                <span><i class="bi bi-geo-alt-fill text-primary me-2"></i>Live Location Map</span>
-                <span class="badge bg-success-subtle text-success border border-success-subtle">
-                    <span class="pulse-dot me-1"></span> Live
-                </span>
+                <span><i class="bi bi-clock-history text-primary me-2"></i>Recent Attendance Logs</span>
+                <a href="<?= base_url('attendance') ?>" class="btn btn-sm btn-light border">View All</a>
             </div>
-            <div class="card-body p-2">
-                <div id="dashboard-map"></div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="ps-3 border-0">Employee</th>
+                                <th class="border-0">Time</th>
+                                <th class="border-0">Action</th>
+                                <th class="border-0">Location</th>
+                                <th class="pe-3 border-0 text-end">Geofence</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php if(empty($recentLogs)): ?>
+                            <tr>
+                                <td colspan="5" class="text-center text-muted py-4">No recent logs found.</td>
+                            </tr>
+                            <?php else: ?>
+                            <?php foreach($recentLogs as $log): ?>
+                            <tr>
+                                <td class="ps-3">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <div class="emp-initials"><?= strtoupper(substr($log['employee_name'], 0, 1)) ?></div>
+                                        <div>
+                                            <div class="fw-semibold text-dark"><?= esc($log['employee_name']) ?></div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="fw-medium"><?= date('h:i A', strtotime($log['scanned_at'])) ?></div>
+                                    <div class="text-muted" style="font-size:12px;"><?= date('d M Y', strtotime($log['scanned_at'])) ?></div>
+                                </td>
+                                <td>
+                                    <?php 
+                                        $badges = [
+                                            'check_in'    => 'bg-success-subtle text-success border border-success-subtle',
+                                            'check_out'   => 'bg-danger-subtle text-danger border border-danger-subtle',
+                                            'break_start' => 'bg-warning-subtle text-warning border border-warning-subtle',
+                                            'break_end'   => 'bg-info-subtle text-info border border-info-subtle',
+                                        ];
+                                        $badgeClass = $badges[$log['type']] ?? 'bg-secondary-subtle text-secondary';
+                                    ?>
+                                    <span class="badge rounded-pill <?= $badgeClass ?>"><?= esc($log['scan_label']) ?></span>
+                                </td>
+                                <td>
+                                    <?php if($log['location_name']): ?>
+                                        <div class="text-dark" style="font-size:13px;"><i class="bi bi-geo-alt text-muted me-1"></i><?= esc($log['location_name']) ?></div>
+                                    <?php else: ?>
+                                        <span class="text-muted">-</span>
+                                    <?php endif; ?>
+                                </td>
+                                <td class="pe-3 text-end">
+                                    <?php if($log['geofence_status'] === 'flagged'): ?>
+                                        <span class="badge bg-danger-subtle text-danger"><i class="bi bi-exclamation-triangle me-1"></i>Flagged</span>
+                                    <?php else: ?>
+                                        <span class="badge bg-success-subtle text-success"><i class="bi bi-shield-check me-1"></i>Inside</span>
+                                    <?php endif; ?>
+                                </td>
+                            </tr>
+                            <?php endforeach; ?>
+                            <?php endif; ?>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
@@ -106,16 +166,6 @@
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const liveData = <?= $liveData ?>;
-    const map = L.map('dashboard-map').setView([23.0225, 72.5714], 14);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' }).addTo(map);
-    liveData.forEach(d => {
-        const color = d.geofence_status === 'flagged' ? '#ffc107' : '#198754';
-        L.circleMarker([d.latitude, d.longitude], {
-            radius: 10, fillColor: color, color: '#fff', weight: 2, fillOpacity: 0.9
-        }).addTo(map).bindPopup(`<b>${d.name}</b><br>${d.location_name}<br><small>${d.scanned_at}</small>`);
-    });
-});
+// Dashboard specific scripts (if any) can go here.
 </script>
 <?= $this->endSection() ?>
