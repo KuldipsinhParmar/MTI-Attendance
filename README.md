@@ -12,6 +12,7 @@ A QR-based employee attendance management system. Employees scan QR codes via mo
 - 📍 **Geofencing** — Validate employee is within allowed radius of QR location
 - 🗺️ **Live Map** — Leaflet.js map showing all QR locations & live attendance
 - 👤 **Employee Management** — Add, edit, deactivate employees
+- 📋 **Self-Registration** — Public signup page for new employees
 - 🔳 **QR Code Management** — Generate, print, and manage QR codes per location
 - 📊 **Attendance Logs** — Filter by date, employee, department; export CSV/Excel
 - 💰 **Monthly Payroll Report** — Days worked, absent, late; export PDF/Excel
@@ -65,6 +66,7 @@ docker exec -it mti_attendance_app php spark db:seed AttendanceSeeder
 | Service | URL |
 |---|---|
 | 🌐 Web Admin Panel | http://localhost:8082 |
+| 🧑‍💻 Employee Signup | http://localhost:8082/signup |
 | 🗄️ phpMyAdmin | http://localhost:8083 |
 | 🔌 API Base URL | http://localhost:8082/api |
 
@@ -82,7 +84,7 @@ Password: give me
 MTI Attandance Web/
 ├── app/
 │   ├── Controllers/
-│   │   ├── Auth.php              # Admin web login
+│   │   ├── Auth.php              # Admin web login & Public signup
 │   │   ├── Dashboard.php         # Dashboard page
 │   │   ├── Employees.php         # Employee management
 │   │   ├── QRCodes.php           # QR code management

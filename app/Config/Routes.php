@@ -7,6 +7,8 @@ use CodeIgniter\Router\RouteCollection;
 // Public Auth
 $routes->get('/login',  'Auth::login');
 $routes->post('/login', 'Auth::loginPost');
+$routes->get('/signup', 'Auth::signup');
+$routes->post('/signup', 'Auth::signupPost');
 $routes->get('/logout', 'Auth::logout');
 $routes->get('/',       'Auth::login');
 
