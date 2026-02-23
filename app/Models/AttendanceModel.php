@@ -154,14 +154,47 @@ class AttendanceModel extends Model
         $from = $month . '-01';
         $to   = date('Y-m-t', strtotime($from));
 
-        return $db->table('employees e')
-                  ->select('e.id, e.employee_code, e.name, e.department,
-                    COUNT(DISTINCT CASE WHEN a.type="check_in" THEN a.date END) AS days_present,
-                    SUM(CASE WHEN a.type="check_in" AND TIME(a.scanned_at) > (SELECT value FROM settings WHERE `key`="work_start_time") THEN 1 ELSE 0 END) AS late_days')
-                  ->join('attendance a', "a.employee_id = e.id AND a.date BETWEEN '$from' AND '$to'", 'left')
-                  ->where('e.is_active', 1)
-                  ->groupBy('e.id')
-                  ->get()->getResultArray();
+        // Compute per-employee per-day net_minutes, then SUM across the month
+        $sql = "
+            SELECT
+                e.id,
+                e.employee_code,
+                e.name,
+                e.department,
+                COUNT(DISTINCT CASE WHEN a.type = 'check_in' THEN a.date END) AS days_present,
+                SUM(CASE
+                    WHEN a.type = 'check_in'
+                     AND TIME(a.scanned_at) > (SELECT value FROM settings WHERE `key` = 'work_start_time')
+                    THEN 1 ELSE 0 END) AS late_days,
+                COALESCE(SUM(daily.net_minutes), 0) AS total_net_minutes
+            FROM employees e
+            LEFT JOIN attendance a
+                ON a.employee_id = e.id
+               AND a.date BETWEEN ? AND ?
+            LEFT JOIN (
+                SELECT
+                    a2.employee_id,
+                    a2.date,
+                    GREATEST(0, COALESCE(
+                        TIMESTAMPDIFF(MINUTE,
+                            MIN(CASE WHEN a2.type = 'check_in'    THEN a2.scanned_at END),
+                            MAX(CASE WHEN a2.type = 'check_out'   THEN a2.scanned_at END)
+                        ) - COALESCE(
+                            TIMESTAMPDIFF(MINUTE,
+                                MIN(CASE WHEN a2.type = 'break_start' THEN a2.scanned_at END),
+                                MAX(CASE WHEN a2.type = 'break_end'   THEN a2.scanned_at END)
+                            ), 0
+                        ), 0
+                    )) AS net_minutes
+                FROM attendance a2
+                WHERE a2.date BETWEEN ? AND ?
+                GROUP BY a2.employee_id, a2.date
+            ) daily ON daily.employee_id = e.id AND daily.date BETWEEN ? AND ?
+            WHERE e.is_active = 1
+            GROUP BY e.id
+        ";
+
+        return $db->query($sql, [$from, $to, $from, $to, $from, $to])->getResultArray();
     }
 
     // ─── Map Live ───────────────────────────────────────────────────────────────

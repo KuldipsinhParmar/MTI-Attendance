@@ -4,17 +4,21 @@ document.getElementById('sidebarToggle')?.addEventListener('click', function () 
 });
 
 // ── DataTables (Bootstrap 5 skin) ───────────────────────────
-$(document).ready(function () {
+function initDataTables() {
     $('.datatable').each(function () {
+        if ($.fn.DataTable.isDataTable(this)) {
+            $(this).DataTable().destroy();
+        }
+
         const tableId = $(this).attr('id');
 
         // Column-specific settings per table
         let columnDefs = [{ orderable: false, targets: -1 }];
 
-        // Attendance table: also disable ordering on Break column (index 4 — contains HTML)
+        // Attendance table: also disable ordering on Break column (index 3 — contains HTML)
         if (tableId === 'attendance-table') {
             columnDefs = [
-                { orderable: false, targets: [4, 7] }   // Break col + Status col
+                { orderable: false, targets: [3, 6] }   // Break col + Status col
             ];
         }
 
@@ -70,5 +74,58 @@ $(document).ready(function () {
             columnDefs: columnDefs
         });
     });
+}
+
+// Intercept GET forms (like filters) to use AJAX instead of URL-based page reloads
+$(document).on('submit', 'form[method="GET"]:not(.no-ajax)', function(e) {
+    if ($(this).find('input[type="date"], input[type="month"], select, input[type="text"]').length > 0) {
+        e.preventDefault();
+        const form = $(this);
+        const url = form.attr('action') || window.location.pathname;
+        const formData = form.serialize();
+        const fullUrl = url + '?' + formData;
+        
+        const btn = form.find('button[type="submit"]');
+        const origContent = btn.html();
+        if (btn.length > 0) {
+            btn.html('<span class="spinner-border spinner-border-sm me-1" style="width:14px;height:14px;"></span> Filtering...');
+            btn.prop('disabled', true);
+        }
+
+        $.ajax({
+            url: fullUrl,
+            method: 'GET',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+            success: function(response) {
+                // Parse full HTML string into a DOM
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(response, 'text/html');
+                const newContent = doc.querySelector('main.content');
+
+                if (newContent) {
+                    // Update the page content smoothly
+                    $('main.content').html(newContent.innerHTML);
+                    // Reinitialize custom elements like Datatables
+                    initDataTables();
+                } else {
+                    window.location.href = fullUrl; // Fallback
+                }
+            },
+            error: function() {
+                window.location.href = fullUrl; // Fallback
+            },
+            complete: function() {
+                // If DOM wasn't replaced (like on error) restore the button
+                if (document.body.contains(btn[0])) {
+                    btn.html(origContent);
+                    btn.prop('disabled', false);
+                }
+            }
+        });
+    }
+});
+
+$(document).ready(function () {
+    initDataTables();
 });
 

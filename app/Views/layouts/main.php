@@ -35,8 +35,11 @@
             <a href="<?= base_url('dashboard') ?>" class="nav-link <?= url_is('dashboard*') ? 'active' : '' ?>">
                 <i class="bi bi-grid-1x2-fill"></i><span>Dashboard</span>
             </a>
-            <a href="<?= base_url('employees') ?>" class="nav-link <?= url_is('employees*') ? 'active' : '' ?>">
+            <a href="<?= base_url('employees') ?>" class="nav-link <?= url_is('employees*') && !isset($_GET['status']) ? 'active' : '' ?>">
                 <i class="bi bi-people-fill"></i><span>Employees</span>
+            </a>
+            <a href="<?= base_url('employees?status=inactive') ?>" class="nav-link <?= (url_is('employees*') && isset($_GET['status']) && $_GET['status'] === 'inactive') ? 'active' : '' ?>">
+                <i class="bi bi-person-slash"></i><span>Inactive Employees</span>
             </a>
             <a href="<?= base_url('qr-codes') ?>" class="nav-link <?= url_is('qr-codes*') ? 'active' : '' ?>">
                 <i class="bi bi-qr-code"></i><span>QR Codes</span>
@@ -112,6 +115,6 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
 <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
 <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.print.min.js"></script>
-<script src="<?= base_url('assets/js/app.js') ?>"></script>
+<script src="<?= base_url('assets/js/app.js') ?>?v=<?= filemtime(FCPATH . 'assets/js/app.js') ?>"></script>
 </body>
 </html>

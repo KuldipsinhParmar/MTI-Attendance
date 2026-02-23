@@ -43,13 +43,23 @@
                         <a href="<?= base_url('employees/edit/' . $emp['id']) ?>" class="btn btn-sm btn-outline-primary" title="Edit">
                             <i class="bi bi-pencil"></i>
                         </a>
-                        <form method="POST" action="<?= base_url('employees/deactivate/' . $emp['id']) ?>" class="d-inline"
-                              onsubmit="return confirm('Deactivate this employee?')">
-                            <?= csrf_field() ?>
-                            <button class="btn btn-sm btn-outline-danger" title="Deactivate">
-                                <i class="bi bi-person-x"></i>
-                            </button>
-                        </form>
+                        <?php if (isset($status) && $status === 'inactive'): ?>
+                            <form method="POST" action="<?= base_url('employees/activate/' . $emp['id']) ?>" class="d-inline"
+                                  onsubmit="return confirm('Activate this employee?')">
+                                <?= csrf_field() ?>
+                                <button class="btn btn-sm btn-outline-success" title="Activate">
+                                    <i class="bi bi-person-check"></i>
+                                </button>
+                            </form>
+                        <?php else: ?>
+                            <form method="POST" action="<?= base_url('employees/deactivate/' . $emp['id']) ?>" class="d-inline"
+                                  onsubmit="return confirm('Deactivate this employee?')">
+                                <?= csrf_field() ?>
+                                <button class="btn btn-sm btn-outline-danger" title="Deactivate">
+                                    <i class="bi bi-person-x"></i>
+                                </button>
+                            </form>
+                        <?php endif; ?>
                     </td>
                 </tr>
             <?php endforeach; ?>

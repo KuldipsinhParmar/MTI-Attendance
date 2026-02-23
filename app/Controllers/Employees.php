@@ -17,8 +17,11 @@ class Employees extends BaseController
     {
         $department = $this->request->getGet('department');
         $search     = $this->request->getGet('search');
+        $status     = $this->request->getGet('status') ?? 'active';
 
-        $query = $this->model->where('is_active', 1);
+        $isActive = $status === 'inactive' ? 0 : 1;
+        $query = $this->model->where('is_active', $isActive);
+
         if ($department) $query->where('department', $department);
         if ($search)     $query->groupStart()->like('name', $search)->orLike('employee_code', $search)->groupEnd();
 
@@ -27,7 +30,8 @@ class Employees extends BaseController
             'departments'        => $this->model->getDepartments(),
             'selectedDepartment' => $department ?? '',
             'searchQuery'        => $search ?? '',
-            'pageTitle'          => 'Employees',
+            'status'             => $status,
+            'pageTitle'          => $status === 'inactive' ? 'Inactive Employees' : 'Employees',
         ]);
     }
 
@@ -135,5 +139,11 @@ class Employees extends BaseController
     {
         $this->model->update($id, ['is_active' => 0]);
         return redirect()->to('/employees')->with('success', 'Employee deactivated.');
+    }
+
+    public function activate(int $id)
+    {
+        $this->model->update($id, ['is_active' => 1]);
+        return redirect()->to('/employees?status=inactive')->with('success', 'Employee activated.');
     }
 }

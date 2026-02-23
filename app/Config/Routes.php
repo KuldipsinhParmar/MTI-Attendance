@@ -21,6 +21,7 @@ $routes->group('', ['filter' => 'auth'], function ($routes) {
     $routes->get('employees/edit/(:num)',        'Employees::edit/$1');
     $routes->post('employees/update/(:num)',     'Employees::update/$1');
     $routes->post('employees/deactivate/(:num)', 'Employees::deactivate/$1');
+    $routes->post('employees/activate/(:num)',   'Employees::activate/$1');
 
     // QR Codes
     $routes->get('qr-codes',                    'QRCodes::index');
@@ -33,6 +34,7 @@ $routes->group('', ['filter' => 'auth'], function ($routes) {
 
     // Attendance
     $routes->get('attendance',                   'Attendance::index');
+    $routes->post('attendance/delete/(:any)/(:num)', 'Attendance::delete/$1/$2');
 
     // Reports
     $routes->get('reports',                      'Reports::index');

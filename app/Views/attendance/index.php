@@ -37,7 +37,6 @@
         <table class="table table-hover datatable mb-0" id="attendance-table" width="100%">
             <thead>
                 <tr>
-                    <th>Code</th>
                     <th>Name</th>
                     <th>Department</th>
                     <th><i class="bi bi-box-arrow-in-right text-success me-1"></i>Shift In</th>
@@ -45,6 +44,7 @@
                     <th><i class="bi bi-box-arrow-right text-danger me-1"></i>Shift Out</th>
                     <th>Net Hours</th>
                     <th>Status</th>
+                    <th class="text-end">Actions</th>
                 </tr>
             </thead>
 
@@ -74,7 +74,6 @@
                 };
             ?>
             <tr>
-                <td><span class="badge bg-primary-subtle text-primary border border-primary-subtle"><?= esc($row['employee_code']) ?></span></td>
                 <td class="fw-medium"><?= esc($row['name']) ?></td>
                 <td><?= esc($row['department']) ?></td>
                 <td><?= $in ?></td>
@@ -82,6 +81,19 @@
                 <td><?= $out ?></td>
                 <td><?= $netDur ?></td>
                 <td><span class="badge <?= $badgeClass ?>"><?= ucfirst($status) ?></span></td>
+                <td class="text-end">
+                    <?php if ($status !== 'absent'): ?>
+                        <form method="POST" action="<?= base_url('attendance/delete/' . $date . '/' . $row['id']) ?>" class="d-inline"
+                              onsubmit="return confirm('Delete all attendance logs for <?= esc($row['name']) ?> on this date?')">
+                            <?= csrf_field() ?>
+                            <button class="btn btn-sm btn-outline-danger" title="Delete Logs">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </form>
+                    <?php else: ?>
+                        —
+                    <?php endif; ?>
+                </td>
             </tr>
             <?php endforeach; ?>
 
