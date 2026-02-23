@@ -10,7 +10,8 @@ $routes->post('/login', 'Auth::loginPost');
 $routes->get('/signup', 'Auth::signup');
 $routes->post('/signup', 'Auth::signupPost');
 $routes->get('/logout', 'Auth::logout');
-$routes->get('/',       'Auth::login');
+$routes->get('/',       'Landing::index');
+$routes->post('/contact', 'Landing::submitContact');
 
 // Admin Web Panel (protected by session auth filter)
 $routes->group('', ['filter' => 'auth'], function ($routes) {
