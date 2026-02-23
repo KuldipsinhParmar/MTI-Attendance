@@ -7,6 +7,8 @@ A QR-based employee attendance management system. Employees scan QR codes via mo
 ## ✨ Features
 
 - 📲 **QR Scan Attendance** — Check-in & check-out via mobile app scan
+- ☕ **Multiple Breaks** — Pause shifts multiple times; calculates true net working hours
+- 🕒 **Auto-Checkout Recovery** — Forgetting to checkout automatically triggers a 24-hour auto-checkout
 - 📍 **Geofencing** — Validate employee is within allowed radius of QR location
 - 🗺️ **Live Map** — Leaflet.js map showing all QR locations & live attendance
 - 👤 **Employee Management** — Add, edit, deactivate employees

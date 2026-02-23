@@ -107,94 +107,194 @@ class AttendanceModel extends Model
 
     // ─── Reports ────────────────────────────────────────────────────────────────
 
-    /**
-     * Returns one row per employee per date with:
-     *   check_in, break_start, break_end, check_out,
-     *   net_minutes (gross minutes minus break minutes),
-     *   geofence_status
-     */
     public function getDailyLog(string $date, ?int $employeeId = null, ?string $department = null): array
     {
-        $db  = \Config\Database::connect();
+        // Automatically check out missed logs before calculating the log
+        $this->autoCheckoutMissedLogs();
+
+        $db = \Config\Database::connect();
         $sql = $db->table('employees e')
-                  ->select("
-                    e.id, e.employee_code, e.name, e.department,
-                    MIN(CASE WHEN a.type = 'check_in'    THEN a.scanned_at END) AS check_in,
-                    MIN(CASE WHEN a.type = 'break_start' THEN a.scanned_at END) AS break_start,
-                    MAX(CASE WHEN a.type = 'break_end'   THEN a.scanned_at END) AS break_end,
-                    MAX(CASE WHEN a.type = 'check_out'   THEN a.scanned_at END) AS check_out,
-                    ROUND(
-                        TIMESTAMPDIFF(MINUTE,
-                            MIN(CASE WHEN a.type = 'check_in'  THEN a.scanned_at END),
-                            MAX(CASE WHEN a.type = 'check_out' THEN a.scanned_at END)
-                        )
-                        -
-                        COALESCE(
-                            TIMESTAMPDIFF(MINUTE,
-                                MIN(CASE WHEN a.type = 'break_start' THEN a.scanned_at END),
-                                MAX(CASE WHEN a.type = 'break_end'   THEN a.scanned_at END)
-                            ), 0
-                        )
-                    ) AS net_minutes,
-                    MAX(a.geofence_status) AS geofence_status
-                  ")
-                  ->join('attendance a', "a.employee_id = e.id AND a.date = '$date'", 'left')
-                  ->where('e.is_active', 1)
-                  ->groupBy('e.id');
+                  ->select('e.id, e.employee_code, e.name, e.department')
+                  ->where('e.is_active', 1);
 
         if ($employeeId) $sql->where('e.id', $employeeId);
         if ($department) $sql->where('e.department', $department);
+        
+        $employees = $sql->get()->getResultArray();
+        
+        $attQuery = $db->table('attendance')
+                       ->where('date', $date)
+                       ->orderBy('scanned_at', 'ASC');
+        if ($employeeId) $attQuery->where('employee_id', $employeeId);
+        $attendanceLogs = $attQuery->get()->getResultArray();
 
-        return $sql->get()->getResultArray();
+        $attByEmp = [];
+        foreach ($attendanceLogs as $log) {
+            $attByEmp[$log['employee_id']][] = $log;
+        }
+
+        foreach ($employees as &$emp) {
+            $logs = $attByEmp[$emp['id']] ?? [];
+            $emp['check_in'] = null;
+            $emp['check_out'] = null;
+            $emp['breaks'] = [];
+            $emp['geofence_status'] = null;
+            
+            $breakStart = null;
+            $totalBreakMins = 0;
+            
+            foreach ($logs as $log) {
+                if ($log['type'] === 'check_in' && !$emp['check_in']) {
+                    $emp['check_in'] = $log['scanned_at'];
+                }
+                if ($log['type'] === 'check_out') {
+                    $emp['check_out'] = $log['scanned_at'];
+                }
+                if ($log['type'] === 'break_start') {
+                    $breakStart = $log['scanned_at'];
+                }
+                if ($log['type'] === 'break_end' && $breakStart) {
+                    $emp['breaks'][] = ['start' => $breakStart, 'end' => $log['scanned_at']];
+                    $totalBreakMins += round((strtotime($log['scanned_at']) - strtotime($breakStart)) / 60);
+                    $breakStart = null;
+                }
+                if ($log['geofence_status'] === 'flagged') {
+                    $emp['geofence_status'] = 'flagged';
+                } elseif (!$emp['geofence_status'] && $log['geofence_status']) {
+                    $emp['geofence_status'] = $log['geofence_status'];
+                }
+            }
+            
+            if ($breakStart && !$emp['check_out']) {
+                $emp['breaks'][] = ['start' => $breakStart, 'end' => null];
+            }
+            
+            $grossMins = 0;
+            if ($emp['check_in'] && $emp['check_out']) {
+                $grossMins = round((strtotime($emp['check_out']) - strtotime($emp['check_in'])) / 60);
+            }
+            
+            $emp['net_minutes'] = max(0, $grossMins - $totalBreakMins);
+            
+            $emp['break_start'] = $emp['breaks'][0]['start'] ?? null;
+            $emp['break_end'] = $emp['breaks'][count($emp['breaks']) - 1]['end'] ?? null;
+        }
+        
+        return $employees;
     }
 
     public function getMonthlyReport(string $month): array
     {
-        $db   = \Config\Database::connect();
+        // check out missed logs first
+        $this->autoCheckoutMissedLogs();
+
+        $db = \Config\Database::connect();
         $from = $month . '-01';
-        $to   = date('Y-m-t', strtotime($from));
+        $to = date('Y-m-t', strtotime($from));
 
-        // Compute per-employee per-day net_minutes, then SUM across the month
-        $sql = "
-            SELECT
-                e.id,
-                e.employee_code,
-                e.name,
-                e.department,
-                COUNT(DISTINCT CASE WHEN a.type = 'check_in' THEN a.date END) AS days_present,
-                SUM(CASE
-                    WHEN a.type = 'check_in'
-                     AND TIME(a.scanned_at) > (SELECT value FROM settings WHERE `key` = 'work_start_time')
-                    THEN 1 ELSE 0 END) AS late_days,
-                COALESCE(SUM(daily.net_minutes), 0) AS total_net_minutes
-            FROM employees e
-            LEFT JOIN attendance a
-                ON a.employee_id = e.id
-               AND a.date BETWEEN ? AND ?
-            LEFT JOIN (
-                SELECT
-                    a2.employee_id,
-                    a2.date,
-                    GREATEST(0, COALESCE(
-                        TIMESTAMPDIFF(MINUTE,
-                            MIN(CASE WHEN a2.type = 'check_in'    THEN a2.scanned_at END),
-                            MAX(CASE WHEN a2.type = 'check_out'   THEN a2.scanned_at END)
-                        ) - COALESCE(
-                            TIMESTAMPDIFF(MINUTE,
-                                MIN(CASE WHEN a2.type = 'break_start' THEN a2.scanned_at END),
-                                MAX(CASE WHEN a2.type = 'break_end'   THEN a2.scanned_at END)
-                            ), 0
-                        ), 0
-                    )) AS net_minutes
-                FROM attendance a2
-                WHERE a2.date BETWEEN ? AND ?
-                GROUP BY a2.employee_id, a2.date
-            ) daily ON daily.employee_id = e.id AND daily.date BETWEEN ? AND ?
-            WHERE e.is_active = 1
-            GROUP BY e.id
-        ";
+        $sql = $db->table('employees e')
+                  ->select('e.id, e.employee_code, e.name, e.department')
+                  ->where('e.is_active', 1);
+        $employees = $sql->get()->getResultArray();
 
-        return $db->query($sql, [$from, $to, $from, $to, $from, $to])->getResultArray();
+        $attQuery = $db->table('attendance')
+                       ->where('date >=', $from)
+                       ->where('date <=', $to)
+                       ->orderBy('scanned_at', 'ASC');
+        $attendanceLogs = $attQuery->get()->getResultArray();
+        
+        $attByEmpDay = [];
+        foreach ($attendanceLogs as $log) {
+            $attByEmpDay[$log['employee_id']][$log['date']][] = $log;
+        }
+
+        $workStart = model('SettingsModel')->getSetting('work_start_time', '09:00:00');
+
+        foreach ($employees as &$emp) {
+            $emp['days_present'] = 0;
+            $emp['late_days'] = 0;
+            $emp['total_net_minutes'] = 0;
+
+            $empLogsByDate = $attByEmpDay[$emp['id']] ?? [];
+            foreach ($empLogsByDate as $date => $logs) {
+                $checkIn = null;
+                $checkOut = null;
+                $breakStart = null;
+                $totalBreakMins = 0;
+
+                foreach ($logs as $log) {
+                    if ($log['type'] === 'check_in' && !$checkIn) {
+                        $checkIn = $log['scanned_at'];
+                        if (date('H:i:s', strtotime($checkIn)) > $workStart) {
+                            $emp['late_days']++;
+                        }
+                    }
+                    if ($log['type'] === 'check_out') {
+                        $checkOut = $log['scanned_at'];
+                    }
+                    if ($log['type'] === 'break_start') {
+                        $breakStart = $log['scanned_at'];
+                    }
+                    if ($log['type'] === 'break_end' && $breakStart) {
+                        $totalBreakMins += round((strtotime($log['scanned_at']) - strtotime($breakStart)) / 60);
+                        $breakStart = null;
+                    }
+                }
+
+                if ($checkIn) {
+                    $emp['days_present']++;
+                }
+
+                if ($checkIn && $checkOut) {
+                    $grossMins = round((strtotime($checkOut) - strtotime($checkIn)) / 60);
+                    $netMins = max(0, $grossMins - $totalBreakMins);
+                    $emp['total_net_minutes'] += $netMins;
+                }
+            }
+        }
+
+        return $employees;
+    }
+
+    // ─── Auto Checkout ──────────────────────────────────────────────────────────
+
+    public function autoCheckoutMissedLogs(): void
+    {
+        $db = \Config\Database::connect();
+        // 24 hours ago
+        $twentyFourHoursAgo = date('Y-m-d H:i:s', strtotime('-24 hours'));
+        
+        $sql = "SELECT a.employee_id, a.date, a.scanned_at as check_in_time, a.qr_token_id
+                FROM attendance a
+                WHERE a.type = 'check_in'
+                  AND a.scanned_at <= ?
+                  AND NOT EXISTS (
+                      SELECT 1 FROM attendance a2 
+                      WHERE a2.employee_id = a.employee_id 
+                        AND a2.date = a.date 
+                        AND a2.type = 'check_out'
+                  )";
+                  
+        $missed = $db->query($sql, [$twentyFourHoursAgo])->getResultArray();
+        
+        foreach ($missed as $m) {
+            $checkoutTime = date('Y-m-d H:i:s', strtotime($m['check_in_time'] . ' + 24 hours'));
+            
+            $db->table('attendance')->insert([
+                'employee_id'     => $m['employee_id'],
+                'qr_token_id'     => $m['qr_token_id'] ?: 1,
+                'type'            => 'check_out',
+                'scan_label'      => 'Shift End (Auto)',
+                'scan_latitude'   => null,
+                'scan_longitude'  => null,
+                'geofence_status' => 'inside',
+                'scanned_at'      => $checkoutTime,
+                'date'            => $m['date'],
+                'note'            => 'Auto-logout after 24 hrs',
+                'created_at'      => date('Y-m-d H:i:s'),
+                'updated_at'      => date('Y-m-d H:i:s'),
+            ]);
+        }
     }
 
     // ─── Map Live ───────────────────────────────────────────────────────────────
@@ -221,5 +321,97 @@ class AttendanceModel extends Model
                   AND a2.scanned_at > a.scanned_at
               )
         ")->getResultArray();
+    }
+
+    // ─── Admin Edits ────────────────────────────────────────────────────────────
+
+    public function deleteLogsByDate(string $date, int $employeeId): void
+    {
+        $db = \Config\Database::connect();
+        $db->table('attendance')
+           ->where('employee_id', $employeeId)
+           ->where('date', $date)
+           ->delete();
+    }
+
+    public function updateLogsByDate(string $date, int $employeeId, array $times): void
+    {
+        $db = \Config\Database::connect();
+        
+        // Handle single-value types
+        $singleTypes = ['check_in', 'check_out'];
+        foreach ($singleTypes as $type) {
+            $timeVal = $times[$type] ?? null;
+            
+            // Delete old
+            $db->table('attendance')
+               ->where('employee_id', $employeeId)
+               ->where('date', $date)
+               ->where('type', $type)
+               ->delete();
+            
+            if (!empty($timeVal)) {
+                $db->table('attendance')->insert([
+                    'employee_id'     => $employeeId,
+                    'qr_token_id'     => 1,
+                    'type'            => $type,
+                    'scan_label'      => self::LABELS[$type] ?? ucwords(str_replace('_', ' ', $type)),
+                    'date'            => $date,
+                    'scanned_at'      => $date . ' ' . $timeVal . (strlen($timeVal) == 5 ? ':00' : ''),
+                    'geofence_status' => 'inside',
+                    'note'            => 'Edited by Admin',
+                    'created_at'      => date('Y-m-d H:i:s'),
+                    'updated_at'      => date('Y-m-d H:i:s'),
+                ]);
+            }
+        }
+        
+        // Handle breaks
+        // Delete all old breaks
+        $db->table('attendance')
+           ->where('employee_id', $employeeId)
+           ->where('date', $date)
+           ->whereIn('type', ['break_start', 'break_end'])
+           ->delete();
+           
+        $breakStarts = $times['break_starts'] ?? [];
+        $breakEnds   = $times['break_ends'] ?? [];
+        
+        if (is_array($breakStarts)) {
+            foreach ($breakStarts as $index => $timeVal) {
+                if (empty($timeVal)) continue;
+                
+                // break_start
+                $db->table('attendance')->insert([
+                    'employee_id'     => $employeeId,
+                    'qr_token_id'     => 1,
+                    'type'            => 'break_start',
+                    'scan_label'      => self::LABELS['break_start'],
+                    'date'            => $date,
+                    'scanned_at'      => $date . ' ' . $timeVal . (strlen($timeVal) == 5 ? ':00' : ''),
+                    'geofence_status' => 'inside',
+                    'note'            => 'Edited by Admin',
+                    'created_at'      => date('Y-m-d H:i:s'),
+                    'updated_at'      => date('Y-m-d H:i:s'),
+                ]);
+                
+                // matching break_end
+                if (!empty($breakEnds[$index])) {
+                    $endTime = $breakEnds[$index];
+                    $db->table('attendance')->insert([
+                        'employee_id'     => $employeeId,
+                        'qr_token_id'     => 1,
+                        'type'            => 'break_end',
+                        'scan_label'      => self::LABELS['break_end'],
+                        'date'            => $date,
+                        'scanned_at'      => $date . ' ' . $endTime . (strlen($endTime) == 5 ? ':00' : ''),
+                        'geofence_status' => 'inside',
+                        'note'            => 'Edited by Admin',
+                        'created_at'      => date('Y-m-d H:i:s'),
+                        'updated_at'      => date('Y-m-d H:i:s'),
+                    ]);
+                }
+            }
+        }
     }
 }

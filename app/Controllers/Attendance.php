@@ -31,11 +31,8 @@ class Attendance extends BaseController
     }
     public function delete(string $date, int $employeeId)
     {
-        $db = \Config\Database::connect();
-        $db->table('attendance')
-           ->where('employee_id', $employeeId)
-           ->where('date', $date)
-           ->delete();
+        $model = new AttendanceModel();
+        $model->deleteLogsByDate($date, $employeeId);
         
         return redirect()->back()->with('success', 'Attendance logs deleted successfully.');
     }
@@ -57,34 +54,15 @@ class Attendance extends BaseController
 
     public function update(string $date, int $employeeId)
     {
-        $db = \Config\Database::connect();
-        $types = ['check_in', 'break_start', 'break_end', 'check_out'];
+        $times = [
+            'check_in'     => $this->request->getPost('check_in'),
+            'check_out'    => $this->request->getPost('check_out'),
+            'break_starts' => $this->request->getPost('break_starts'),
+            'break_ends'   => $this->request->getPost('break_ends'),
+        ];
         
-        foreach ($types as $type) {
-            $timeVal = $this->request->getPost($type);
-            
-            // Delete old records of this type for this date/employee
-            $db->table('attendance')
-               ->where('employee_id', $employeeId)
-               ->where('date', $date)
-               ->where('type', $type)
-               ->delete();
-            
-            // If time is provided, insert a new record
-            if (!empty($timeVal)) {
-                $db->table('attendance')->insert([
-                    'employee_id'     => $employeeId,
-                    'type'            => $type,
-                    'scan_label'      => AttendanceModel::LABELS[$type] ?? ucwords(str_replace('_', ' ', $type)),
-                    'date'            => $date,
-                    'scanned_at'      => $date . ' ' . $timeVal . (strlen($timeVal) == 5 ? ':00' : ''),
-                    'geofence_status' => 'inside', // Manual edit
-                    'note'            => 'Edited by Admin',
-                    'created_at'      => date('Y-m-d H:i:s'),
-                    'updated_at'      => date('Y-m-d H:i:s'),
-                ]);
-            }
-        }
+        $model = new AttendanceModel();
+        $model->updateLogsByDate($date, $employeeId, $times);
         
         return redirect()->to('/attendance?date=' . $date . '&employee_id=' . $employeeId)->with('success', 'Attendance manually updated.');
     }

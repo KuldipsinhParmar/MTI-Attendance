@@ -165,6 +165,10 @@ Mark attendance by scanning a QR code. The system automatically toggles between 
 #### Full Scan Cycle & Break Flow
 The server tracks each employee's last scan for the day and automatically determines the next expected scan type: `check_in` → `break_start` → `break_end` → `check_out`. If the `scan_type` field is omitted from the request, the server auto-detects the next step based on the last recorded scan. For the mobile app, it's recommended to handle ambiguous states (like going on break vs checking out) client-side and pass `scan_type` explicitly.
 
+**Multiple Breaks:** Employees can take multiple breaks in a single day. The system will correctly track all `break_start` and `break_end` segments to calculate the true net working minutes.
+
+**Auto-Checkout:** If an employee forgets to check out, the system will automatically trigger an auto-logout event precisely 24 hours after their check-in time. This keeps shifts from bleeding into the next day infinitely.
+
 #### Response — Success (200 OK)
 
 ```json

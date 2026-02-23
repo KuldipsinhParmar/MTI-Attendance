@@ -30,6 +30,9 @@ class AttendanceApi extends ResourceController
         $empModel  = new EmployeeModel();
         $settings  = new SettingsModel();
 
+        // Process any pending auto-logouts
+        $attModel->autoCheckoutMissedLogs();
+
         // Validate QR
         $qr = $qrModel->findByToken($token);
         if (!$qr) {
@@ -119,6 +122,8 @@ class AttendanceApi extends ResourceController
         if (!$employeeId) return $this->failValidationErrors('employee_id is required.');
 
         $model = new AttendanceModel();
+        $model->autoCheckoutMissedLogs();
+
         $logs  = $model->where('employee_id', $employeeId)
                        ->where('date', date('Y-m-d'))
                        ->orderBy('scanned_at', 'ASC')
@@ -136,6 +141,8 @@ class AttendanceApi extends ResourceController
         if (!$employeeId) return $this->failValidationErrors('employee_id is required.');
 
         $model = new AttendanceModel();
+        $model->autoCheckoutMissedLogs();
+
         $logs  = $model->where('employee_id', $employeeId)
                        ->where('date >=', $from)
                        ->where('date <=', $to)

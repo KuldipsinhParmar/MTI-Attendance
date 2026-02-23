@@ -50,14 +50,19 @@
 
             <tbody>
             <?php foreach ($logs as $row):
-                $in      = $row['check_in']    ? date('h:i A', strtotime($row['check_in']))   : '—';
-                $brStart = $row['break_start'] ? date('h:i A', strtotime($row['break_start'])): null;
-                $brEnd   = $row['break_end']   ? date('h:i A', strtotime($row['break_end']))  : null;
-                $out     = $row['check_out']   ? date('h:i A', strtotime($row['check_out']))  : '—';
+                $in  = $row['check_in']  ? date('h:i A', strtotime($row['check_in']))  : '—';
+                $out = $row['check_out'] ? date('h:i A', strtotime($row['check_out'])) : '—';
 
-                if ($brStart && $brEnd)       $breakCell = $brStart . ' → ' . $brEnd;
-                elseif ($brStart && !$brEnd)  $breakCell = '<span class="badge bg-warning-subtle text-warning border border-warning-subtle">On Break</span>';
-                else                          $breakCell = '—';
+                $breaks = $row['breaks'] ?? [];
+                $breakCells = [];
+                foreach ($breaks as $br) {
+                    $bStart = $br['start'] ? date('h:i A', strtotime($br['start'])) : '';
+                    $bEnd   = $br['end']   ? date('h:i A', strtotime($br['end']))   : '<span class="badge bg-warning-subtle text-warning border border-warning-subtle">On Break</span>';
+                    if ($bStart) {
+                        $breakCells[] = $bStart . ' &rarr; ' . $bEnd;
+                    }
+                }
+                $breakCell = empty($breakCells) ? '—' : implode('<br>', $breakCells);
 
                 $netMins = isset($row['net_minutes']) && $row['net_minutes'] > 0 ? (int)$row['net_minutes'] : null;
                 $netDur  = $netMins !== null

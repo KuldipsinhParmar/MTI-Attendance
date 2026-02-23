@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= esc($pageTitle ?? 'MTI Attendance') ?> — MTI Attendance</title>
+    <!-- QR Code Favicon -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%230d6efd'%3E%3Cpath d='M0 .5A.5.5 0 0 1 .5 0h3a.5.5 0 0 1 0 1H1v2.5a.5.5 0 0 1-1 0v-3zm12 0a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 .5.5v3a.5.5 0 0 1-1 0V1h-2.5a.5.5 0 0 1-.5-.5zM.5 16a.5.5 0 0 1-.5-.5v-3a.5.5 0 0 1 1 0v2.5h2.5a.5.5 0 0 1 0 1h-3zm12 0a.5.5 0 0 1-.5-.5v-3a.5.5 0 0 1 1 0v2.5h2.5a.5.5 0 0 1 0 1h-3zM3 3h10v10H3V3z'/%3E%3Cpath d='M4 4h8v8H4z'/%3E%3C/svg%3E">
     <!-- Bootstrap 5 -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
     <!-- Bootstrap Icons -->
@@ -70,9 +72,23 @@
             </button>
             <span class="fw-semibold text-dark"><?= esc($pageTitle ?? '') ?></span>
             <div class="ms-auto d-flex align-items-center gap-2">
-                <span class="badge bg-light text-dark border px-3 py-2">
-                    <i class="bi bi-person-circle me-1"></i><?= session()->get('admin_name') ?>
-                </span>
+                <div class="dropdown">
+                    <button class="btn btn-light rounded-pill border py-1 ps-1 pe-3 d-flex align-items-center gap-2 shadow-sm" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; font-weight: 600; font-size: 14px;">
+                            <?php 
+                                $name = session()->get('admin_name') ?: 'Admin';
+                                echo strtoupper(substr($name, 0, 1));
+                            ?>
+                        </div>
+                        <span class="fw-medium text-dark small"><?= esc($name) ?></span>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-2 py-2">
+                        <li><h6 class="dropdown-header text-uppercase text-muted fw-semibold mb-1" style="letter-spacing: 0.5px; font-size: 0.7rem;">Signed in as</h6></li>
+                        <li><span class="dropdown-item-text fw-medium pb-2"><?= esc(session()->get('admin_email') ?: 'admin@mti.com') ?></span></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item text-danger pt-2" href="<?= base_url('logout') ?>"><i class="bi bi-box-arrow-right me-2"></i>Logout</a></li>
+                    </ul>
+                </div>
             </div>
         </nav>
 

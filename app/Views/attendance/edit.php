@@ -41,13 +41,32 @@
                     </div>
 
                     <div class="row mb-4">
-                        <div class="col-6">
-                            <label class="form-label text-warning fw-medium"><i class="bi bi-cup-hot me-1"></i>Break Start</label>
-                            <input type="time" name="break_start" class="form-control" value="<?= $breakStart ?>">
-                        </div>
-                        <div class="col-6">
-                            <label class="form-label text-warning fw-medium"><i class="bi bi-cup-fill me-1"></i>Break End</label>
-                            <input type="time" name="break_end" class="form-control" value="<?= $breakEnd ?>">
+                        <div class="col-12">
+                            <label class="form-label text-warning fw-medium"><i class="bi bi-cup-hot me-1"></i>Breaks</label>
+                            <div id="breaks-container">
+                                <?php 
+                                $breaks = $log['breaks'] ?? [];
+                                if (empty($breaks)) {
+                                    $breaks[] = ['start' => null, 'end' => null];
+                                }
+                                foreach ($breaks as $idx => $break): 
+                                    $bStart = $break['start'] ? date('H:i', strtotime($break['start'])) : '';
+                                    $bEnd   = $break['end'] ? date('H:i', strtotime($break['end'])) : '';
+                                ?>
+                                <div class="row mb-2 break-row">
+                                    <div class="col-5">
+                                        <input type="time" name="break_starts[]" class="form-control" value="<?= $bStart ?>">
+                                    </div>
+                                    <div class="col-5">
+                                        <input type="time" name="break_ends[]" class="form-control" value="<?= $bEnd ?>">
+                                    </div>
+                                    <div class="col-2">
+                                        <button type="button" class="btn btn-outline-danger w-100 remove-break"><i class="bi bi-x-lg"></i></button>
+                                    </div>
+                                </div>
+                                <?php endforeach; ?>
+                            </div>
+                            <button type="button" class="btn btn-sm btn-outline-warning mt-2" id="add-break-btn"><i class="bi bi-plus-circle me-1"></i> Add Another Break</button>
                         </div>
                     </div>
 
@@ -61,5 +80,40 @@
         </div>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const container = document.getElementById('breaks-container');
+    const addBtn = document.getElementById('add-break-btn');
+
+    addBtn.addEventListener('click', function() {
+        const row = document.createElement('div');
+        row.className = 'row mb-2 break-row';
+        row.innerHTML = `
+            <div class="col-5">
+                <input type="time" name="break_starts[]" class="form-control">
+            </div>
+            <div class="col-5">
+                <input type="time" name="break_ends[]" class="form-control">
+            </div>
+            <div class="col-2">
+                <button type="button" class="btn btn-outline-danger w-100 remove-break"><i class="bi bi-x-lg"></i></button>
+            </div>
+        `;
+        container.appendChild(row);
+    });
+
+    container.addEventListener('click', function(e) {
+        if (e.target.closest('.remove-break')) {
+            const row = e.target.closest('.break-row');
+            if (document.querySelectorAll('.break-row').length > 1) {
+                row.remove();
+            } else {
+                row.querySelectorAll('input').forEach(input => input.value = '');
+            }
+        }
+    });
+});
+</script>
 
 <?= $this->endSection() ?>
