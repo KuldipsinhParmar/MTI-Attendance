@@ -42,6 +42,16 @@ class AttendanceApi extends ResourceController
             return $this->failNotFound('Employee not found.');
         }
 
+        // Prevent multiple check-ins after shifting out
+        $alreadyCheckedOut = $attModel->where('employee_id', $employeeId)
+                                      ->where('date', date('Y-m-d'))
+                                      ->where('type', 'check_out')
+                                      ->first();
+
+        if ($alreadyCheckedOut) {
+            return $this->failForbidden('You have already completed your shift today. Please contact admin to delete or update data.');
+        }
+
         // Geofence check
         $geofenceStatus = 'inside';
         $message        = null;
