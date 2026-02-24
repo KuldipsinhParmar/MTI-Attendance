@@ -26,9 +26,10 @@
 4. [QR Code APIs](#3-qr-code-apis)
 5. [Report APIs](#4-report-apis)
 6. [Map / Live View API](#5-map--live-view-api)
-7. [Error Response Format](#6-error-response-format)
-8. [Data Models Reference](#7-data-models-reference)
-9. [Flutter Integration Guide](#8-flutter-integration-guide)
+7. [Holidays API](#6-holidays-api)
+8. [Error Response Format](#7-error-response-format)
+9. [Data Models Reference](#8-data-models-reference)
+10. [Flutter Integration Guide](#9-flutter-integration-guide)
 
 ---
 
@@ -795,7 +796,35 @@ Returns all QR code locations and currently checked-in employees (not yet checke
 
 ---
 
-## 6. Error Response Format
+## 6. Holidays API
+
+### 6.1 List Holidays
+
+Fetch the sorted list of upcoming and past holidays configured by the admin team. Used to display holidays on the mobile calendar.
+
+| Field | Value |
+|-------|-------|
+| **URL** | `GET /api/holidays` |
+| **Auth** | None required |
+
+#### Response (200 OK)
+
+```json
+{
+  "status": "success",
+  "data": [
+    {
+      "id": 1,
+      "name": "New Year's Day",
+      "date": "2026-01-01"
+    }
+  ]
+}
+```
+
+---
+
+## 7. Error Response Format
 
 All errors follow the CodeIgniter 4 ResourceController standard format:
 
@@ -822,7 +851,7 @@ All errors follow the CodeIgniter 4 ResourceController standard format:
 
 ---
 
-## 7. Data Models Reference
+## 8. Data Models Reference
 
 ### Employee Object
 
@@ -881,9 +910,9 @@ All errors follow the CodeIgniter 4 ResourceController standard format:
 
 ---
 
-## 8. Flutter Integration Guide
+## 9. Flutter Integration Guide
 
-### 8.1 Recommended Package
+### 9.1 Recommended Package
 
 ```yaml
 # pubspec.yaml
@@ -896,7 +925,7 @@ dependencies:
 
 ---
 
-### 8.2 Base API Setup
+### 9.2 Base API Setup
 
 ```dart
 // lib/services/api_service.dart
@@ -916,7 +945,7 @@ class ApiService {
 
 ---
 
-### 8.3 Scan QR Code (Core Flow)
+### 9.3 Scan QR Code (Core Flow)
 
 ```dart
 // lib/services/attendance_service.dart
@@ -986,7 +1015,7 @@ class AttendanceService {
 
 ---
 
-### 8.4 Employee Service
+### 9.4 Employee Service
 
 ```dart
 // lib/services/employee_service.dart
@@ -1010,7 +1039,7 @@ class EmployeeService {
 
 ---
 
-### 8.5 QR Code Scan Flow (with mobile_scanner)
+### 9.5 QR Code Scan Flow (with mobile_scanner)
 
 ```dart
 import 'package:mobile_scanner/mobile_scanner.dart';
@@ -1039,7 +1068,7 @@ MobileScanner(
 
 ---
 
-### 8.6 API Endpoints Quick Reference
+### 9.6 API Endpoints Quick Reference
 
 | Method | URL | Description |
 |--------|-----|-------------|
@@ -1061,10 +1090,11 @@ MobileScanner(
 | `GET` | `/api/reports/monthly?month=` | Monthly report |
 | `GET` | `/api/reports/export?month=` | Get CSV export URL |
 | `GET` | `/api/map/live` | Live map data |
+| `GET` | `/api/holidays` | List all holidays |
 
 ---
 
-### 8.7 ⚠️ Important Notes for Flutter Developer
+### 9.7 ⚠️ Important Notes for Flutter Developer
 
 1. **Base URL on device:** Use your machine's **local IP** (e.g. `192.168.1.100`) — NOT `localhost` — when testing on a physical Android/iOS device.
 2. **Login first:** Always call `POST /api/auth/login` on app start. Store the returned `id`, `name`, `employee_code` etc. in `SharedPreferences`.
