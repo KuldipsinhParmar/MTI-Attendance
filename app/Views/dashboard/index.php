@@ -62,77 +62,33 @@
     <div class="col-xl-8">
         <div class="card h-100">
             <div class="card-header d-flex align-items-center justify-content-between">
-                <span><i class="bi bi-clock-history text-primary me-2"></i>Recent Attendance Logs</span>
-                <a href="<?= base_url('attendance') ?>" class="btn btn-sm btn-light border">View All</a>
+                <span><i class="bi bi-calendar3 text-primary me-2"></i>Attendance Calendar</span>
+                <a href="<?= base_url('attendance') ?>" class="btn btn-sm btn-light border">View Attendance</a>
             </div>
-            <div class="card-body p-0">
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle mb-0">
-                        <thead class="table-light">
-                            <tr>
-                                <th class="ps-3 border-0">Employee</th>
-                                <th class="border-0">Time</th>
-                                <th class="border-0">Action</th>
-                                <th class="border-0">Location</th>
-                                <th class="pe-3 border-0 text-end">Geofence</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php if(empty($recentLogs)): ?>
-                            <tr>
-                                <td colspan="5" class="text-center text-muted py-4">No recent logs found.</td>
-                            </tr>
-                            <?php else: ?>
-                            <?php foreach($recentLogs as $log): ?>
-                            <tr>
-                                <td class="ps-3">
-                                    <div class="d-flex align-items-center gap-2">
-                                        <div class="emp-initials"><?= strtoupper(substr($log['employee_name'], 0, 1)) ?></div>
-                                        <div>
-                                            <div class="fw-semibold text-dark"><?= esc($log['employee_name']) ?></div>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td>
-                                    <div class="fw-medium"><?= date('h:i A', strtotime($log['scanned_at'])) ?></div>
-                                    <div class="text-muted" style="font-size:12px;"><?= date('d M Y', strtotime($log['scanned_at'])) ?></div>
-                                </td>
-                                <td>
-                                    <?php 
-                                        $badges = [
-                                            'check_in'    => 'bg-success-subtle text-success border border-success-subtle',
-                                            'check_out'   => 'bg-danger-subtle text-danger border border-danger-subtle',
-                                            'break_start' => 'bg-warning-subtle text-warning border border-warning-subtle',
-                                            'break_end'   => 'bg-info-subtle text-info border border-info-subtle',
-                                        ];
-                                        $badgeClass = $badges[$log['type']] ?? 'bg-secondary-subtle text-secondary';
-                                    ?>
-                                    <span class="badge rounded-pill <?= $badgeClass ?>"><?= esc($log['scan_label']) ?></span>
-                                </td>
-                                <td>
-                                    <?php if($log['location_name']): ?>
-                                        <div class="text-dark" style="font-size:13px;"><i class="bi bi-geo-alt text-muted me-1"></i><?= esc($log['location_name']) ?></div>
-                                    <?php else: ?>
-                                        <span class="text-muted">-</span>
-                                    <?php endif; ?>
-                                </td>
-                                <td class="pe-3 text-end">
-                                    <?php if($log['geofence_status'] === 'flagged'): ?>
-                                        <span class="badge bg-danger-subtle text-danger"><i class="bi bi-exclamation-triangle me-1"></i>Flagged</span>
-                                    <?php else: ?>
-                                        <span class="badge bg-success-subtle text-success"><i class="bi bi-shield-check me-1"></i>Inside</span>
-                                    <?php endif; ?>
-                                </td>
-                            </tr>
-                            <?php endforeach; ?>
-                            <?php endif; ?>
-                        </tbody>
-                    </table>
-                </div>
+            <div class="card-body p-3">
+                <div id="dashboard-calendar" style="min-height: 450px;"></div>
             </div>
         </div>
     </div>
     <div class="col-xl-4">
+        <style>
+            /* FullCalendar Custom Overrides */
+            #dashboard-calendar a {
+                text-decoration: none !important;
+            }
+            #dashboard-calendar .fc-event {
+                cursor: default;
+            }
+            /* Make Sundays red */
+            #dashboard-calendar .fc-day-sun .fc-col-header-cell-cushion,
+            #dashboard-calendar .fc-day-sun .fc-daygrid-day-number {
+                color: #dc3545 !important;
+            }
+            /* Improve list view styling */
+            .fc-list-event-title a {
+                color: inherit !important;
+            }
+        </style>
         <div class="card h-100">
             <div class="card-header">
                 <i class="bi bi-activity text-primary me-2"></i>Live Activity
@@ -166,6 +122,23 @@
 </div>
 
 <script>
-// Dashboard specific scripts (if any) can go here.
+document.addEventListener('DOMContentLoaded', function() {
+    var calendarEl = document.getElementById('dashboard-calendar');
+    
+    if (calendarEl) {
+        var calendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: 'dayGridMonth',
+            headerToolbar: {
+                left: 'prev,next today',
+                center: 'title',
+                right: 'dayGridMonth,listMonth'
+            },
+            themeSystem: 'bootstrap5',
+            height: 'auto',
+            events: <?= $calendarEvents ?? '[]' ?>
+        });
+        calendar.render();
+    }
+});
 </script>
 <?= $this->endSection() ?>

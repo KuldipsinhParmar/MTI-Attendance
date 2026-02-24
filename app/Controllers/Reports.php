@@ -20,12 +20,13 @@ class Reports extends BaseController
         $report = $model->getMonthlyReport($month, $employeeId, $department);
 
         // Calculate working days in month
-        $daysInMonth = (int) date('t', strtotime($month . '-01'));
+        $workingDaysInfo = $model->getWorkingDaysInfo($month);
 
         return view('reports/index', [
             'report'             => $report,
             'month'              => $month,
-            'daysInMonth'        => $daysInMonth,
+            'daysInMonth'        => $workingDaysInfo['total_days'],
+            'workingDaysInfo'    => $workingDaysInfo,
             'employees'          => (new EmployeeModel())->getActive(),
             'departments'        => (new EmployeeModel())->getDepartments(),
             'selectedEmployee'   => $employeeId ?? '',
@@ -43,15 +44,16 @@ class Reports extends BaseController
         }
         $department = $this->request->getGet('department') ?: null;
         
-        $report = (new AttendanceModel())->getMonthlyReport($month, $employeeId, $department);
+        $model = new AttendanceModel();
+        $report = $model->getMonthlyReport($month, $employeeId, $department);
+        $workingDaysInfo = $model->getWorkingDaysInfo($month);
 
         $filename = 'attendance_' . $month . '.csv';
         header('Content-Type: text/csv');
         header('Content-Disposition: attachment; filename="' . $filename . '"');
 
-        $daysInMonth = (int) date('t', strtotime($month . '-01'));
         $out = fopen('php://output', 'w');
-        fputcsv($out, ['Name', 'Department', 'Days Present', 'Late Days', 'Days Absent', 'Total Hours', 'Avg Hours/Day']);
+        fputcsv($out, ['Name', 'Department', 'Total Working Days', 'Days Present', 'Late Days', 'Days Absent', 'Total Hours', 'Avg Hours/Day']);
 
 
         foreach ($report as $row) {
@@ -64,13 +66,17 @@ class Reports extends BaseController
             $avgH = floor($avgMins / 60);
             $avgM = $avgMins % 60;
             $avgStr = $avgMins > 0 ? $avgH . 'h' . ($avgM > 0 ? ' ' . $avgM . 'm' : '') : '0h';
+            
+            // Days absent is calculated against total working days 
+            $daysAbsent = max(0, $workingDaysInfo['total_working_days'] - $row['days_present']);
 
             fputcsv($out, [
                 $row['name'],
                 $row['department'],
+                $workingDaysInfo['total_working_days'],
                 $row['days_present'],
                 $row['late_days'],
-                $daysInMonth - $row['days_present'],
+                $daysAbsent,
                 $totalStr,
                 $avgStr,
             ]);

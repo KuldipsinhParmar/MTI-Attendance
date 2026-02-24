@@ -117,6 +117,26 @@ class AttendanceModel extends Model
                   ->get()->getResultArray();
     }
 
+    public function getCalendarEvents(): array
+    {
+        $db = \Config\Database::connect();
+        $events = [];
+
+        // Fetch Holidays
+        $holidays = $db->table('holidays')->select('name, date')->get()->getResultArray();
+        foreach ($holidays as $holiday) {
+            $events[] = [
+                'title' => $holiday['name'],
+                'start' => $holiday['date'],
+                'color' => '#dc3545', // Red
+                'allDay' => true
+            ];
+        }
+
+        return $events;
+    }
+
+
     // ─── Reports ────────────────────────────────────────────────────────────────
 
     public function getDailyLog(string $date, ?int $employeeId = null, ?string $department = null): array
@@ -229,11 +249,14 @@ class AttendanceModel extends Model
         }
 
         $workStart = model('SettingsModel')->getSetting('work_start_time', '09:00:00');
+        
+        $workingDaysInfo = $this->getWorkingDaysInfo($month);
 
         foreach ($employees as &$emp) {
             $emp['days_present'] = 0;
             $emp['late_days'] = 0;
             $emp['total_net_minutes'] = 0;
+            $emp['working_days_info'] = $workingDaysInfo;
 
             $empLogsByDate = $attByEmpDay[$emp['id']] ?? [];
             foreach ($empLogsByDate as $date => $logs) {
@@ -274,6 +297,64 @@ class AttendanceModel extends Model
         }
 
         return $employees;
+    }
+
+    /**
+     * Calculates total working days in a given month.
+     * Takes into account standard weekends and specific holidays.
+     * 
+     * @param string $month Format 'Y-m'
+     * @return array
+     */
+    public function getWorkingDaysInfo(string $month): array
+    {
+        $db = \Config\Database::connect();
+        
+        $from = $month . '-01';
+        $to = date('Y-m-t', strtotime($from));
+        $totalDays = (int) date('t', strtotime($from));
+        
+        $settingsJson = model('SettingsModel')->getSetting('weekend_days', '["Saturday", "Sunday"]');
+        $weekends = json_decode($settingsJson, true);
+        if (!is_array($weekends)) {
+            $weekends = ['Saturday', 'Sunday'];
+        }
+
+        $weekendCount = 0;
+        $workableDates = [];
+        
+        for ($i = 1; $i <= $totalDays; $i++) {
+            $dateStr = $month . '-' . str_pad((string)$i, 2, '0', STR_PAD_LEFT);
+            $dayName = date('l', strtotime($dateStr));
+            
+            if (in_array($dayName, $weekends)) {
+                $weekendCount++;
+            } else {
+                $workableDates[] = $dateStr;
+            }
+        }
+
+        // Get holidays within this month
+        $holidays = $db->table('holidays')
+                       ->where('date >=', $from)
+                       ->where('date <=', $to)
+                       ->get()->getResultArray();
+
+        $holidayCountOffWorkableDays = 0;
+        foreach ($holidays as $holiday) {
+            if (in_array($holiday['date'], $workableDates)) {
+                $holidayCountOffWorkableDays++;
+            }
+        }
+
+        $totalWorkingDays = $totalDays - $weekendCount - $holidayCountOffWorkableDays;
+        
+        return [
+            'total_days' => $totalDays,
+            'weekends' => $weekendCount,
+            'holidays' => $holidayCountOffWorkableDays,
+            'total_working_days' => $totalWorkingDays
+        ];
     }
 
     // ─── Auto Checkout ──────────────────────────────────────────────────────────

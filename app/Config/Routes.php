@@ -41,6 +41,14 @@ $routes->group('', ['filter' => 'auth'], function ($routes) {
     $routes->post('attendance/update/(:any)/(:num)', 'Attendance::update/$1/$2');
     $routes->post('attendance/delete/(:any)/(:num)', 'Attendance::delete/$1/$2');
 
+    // Holidays
+    $routes->get('holidays',                     'Holidays::index');
+    $routes->get('holidays/create',              'Holidays::create');
+    $routes->post('holidays/store',              'Holidays::store');
+    $routes->get('holidays/edit/(:num)',         'Holidays::edit/$1');
+    $routes->post('holidays/update/(:num)',      'Holidays::update/$1');
+    $routes->post('holidays/delete/(:num)',      'Holidays::delete/$1');
+
     // Reports
     $routes->get('reports',                      'Reports::index');
     $routes->get('reports/export-csv',           'Reports::exportCsv');
@@ -79,4 +87,6 @@ $routes->group('api', function ($routes) {
     $routes->get('reports/export',       'Api\ReportApi::export');
 
     $routes->get('map/live',             'Api\MapApi::live');
+
+    $routes->get('holidays',             'Api\HolidayApi::index');
 });

@@ -40,7 +40,10 @@
         <span><i class="bi bi-bar-chart-fill text-primary me-2"></i>
             Monthly Report — <?= date('F Y', strtotime($month . '-01')) ?>
         </span>
-        <span class="badge bg-secondary-subtle text-secondary border"><?= $daysInMonth ?> working days</span>
+        <span class="badge bg-secondary-subtle text-secondary border">
+            <?= $workingDaysInfo['total_working_days'] ?> working days 
+            <small>(<?= $workingDaysInfo['weekends'] ?> weekends, <?= $workingDaysInfo['holidays'] ?> holidays)</small>
+        </span>
     </div>
     <div class="card-body p-0">
         <table class="table table-hover datatable mb-0" id="reports-table" width="100%">
@@ -58,8 +61,8 @@
             </thead>
             <tbody>
             <?php foreach ($report as $row):
-                $absent   = $daysInMonth - $row['days_present'];
-                $pct      = $daysInMonth > 0 ? round(($row['days_present'] / $daysInMonth) * 100) : 0;
+                $absent   = max(0, $workingDaysInfo['total_working_days'] - $row['days_present']);
+                $pct      = $workingDaysInfo['total_working_days'] > 0 ? round(($row['days_present'] / $workingDaysInfo['total_working_days']) * 100) : 0;
                 $barColor = $pct >= 80 ? 'bg-success' : ($pct >= 60 ? 'bg-warning' : 'bg-danger');
 
                 // Total working hours for the month

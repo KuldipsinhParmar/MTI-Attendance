@@ -18,6 +18,10 @@
     <?php if (strpos(current_url(), '/map') !== false || strpos(current_url(), '/qr-codes/show') !== false || strpos(current_url(), '/qr-codes/edit') !== false || strpos(current_url(), '/qr-codes/create') !== false): ?>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
     <?php endif; ?>
+    <?php if (url_is('dashboard*')): ?>
+    <!-- FullCalendar CSS -->
+    <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js'></script>
+    <?php endif; ?>
     <link rel="stylesheet" href="<?= base_url('assets/css/style.css') ?>">
 </head>
 <body>
@@ -49,6 +53,9 @@
             </a>
             <a href="<?= base_url('attendance') ?>" class="nav-link <?= url_is('attendance*') ? 'active' : '' ?>">
                 <i class="bi bi-calendar-check-fill"></i><span>Attendance</span>
+            </a>
+            <a href="<?= base_url('holidays') ?>" class="nav-link <?= url_is('holidays*') ? 'active' : '' ?>">
+                <i class="bi bi-calendar-event"></i><span>Holidays</span>
             </a>
             <a href="<?= base_url('reports') ?>" class="nav-link <?= url_is('reports*') ? 'active' : '' ?>">
                 <i class="bi bi-bar-chart-fill"></i><span>Reports</span>

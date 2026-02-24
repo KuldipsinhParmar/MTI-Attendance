@@ -11,12 +11,12 @@ class Dashboard extends BaseController
         $model   = new AttendanceModel();
         $summary = $model->getTodaySummary();
         $live    = $model->getLiveCheckedIn();
-        $recent    = $model->getRecentLogs(10);
+        $calendarEvents = $model->getCalendarEvents();
 
         return view('dashboard/index', [
             'summary'    => $summary,
             'liveData'   => json_encode($live),
-            'recentLogs' => $recent,
+            'calendarEvents' => json_encode($calendarEvents),
             'pageTitle'  => 'Dashboard',
         ]);
     }

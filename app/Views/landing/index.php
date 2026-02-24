@@ -4,6 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MTI Attendance - Modern Cloud-Based System</title>
+    
+    <!-- QR Code Favicon -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%230d6efd'%3E%3Cpath d='M0 .5A.5.5 0 0 1 .5 0h3a.5.5 0 0 1 0 1H1v2.5a.5.5 0 0 1-1 0v-3zm12 0a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 .5.5v3a.5.5 0 0 1-1 0V1h-2.5a.5.5 0 0 1-.5-.5zM.5 16a.5.5 0 0 1-.5-.5v-3a.5.5 0 0 1 1 0v2.5h2.5a.5.5 0 0 1 0 1h-3zm12 0a.5.5 0 0 1-.5-.5v-3a.5.5 0 0 1 1 0v2.5h2.5a.5.5 0 0 1 0 1h-3zM3 3h10v10H3V3z'/%3E%3Cpath d='M4 4h8v8H4z'/%3E%3C/svg%3E">
+    
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -382,9 +386,8 @@
                     </ul>
                 </div>
                 <div class="showcase-image">
-                    <div class="image-placeholder">
-                        <span style="font-size: 2rem;">💻</span>
-                        <span>Web Admin Dashboard Screenshot<br>(e.g., showing analytics & stats)</span>
+                    <div class="image-placeholder" style="padding:0; border:none; background:transparent; height:auto;">
+                        <img src="<?= base_url('assets/images/landing/admin-dashboard.png') ?>" alt="Web Admin Dashboard" style="width: 100%; border-radius: var(--radius-lg); box-shadow: var(--shadow-md);">
                     </div>
                 </div>
             </div>
@@ -400,9 +403,8 @@
                     </ul>
                 </div>
                 <div class="showcase-image">
-                    <div class="image-placeholder">
-                        <span style="font-size: 2rem;">💻</span>
-                        <span>Web Reports/Data Table Screenshot<br>(e.g., employee list or logs)</span>
+                    <div class="image-placeholder" style="padding:0; border:none; background:transparent; height:auto;">
+                        <img src="<?= base_url('assets/images/landing/admin-reports.png') ?>" alt="Detailed Reports" style="width: 100%; border-radius: var(--radius-lg); box-shadow: var(--shadow-md);">
                     </div>
                 </div>
             </div>
@@ -419,9 +421,8 @@
                     </ul>
                 </div>
                 <div class="showcase-image">
-                    <div class="image-placeholder mobile-placeholder">
-                        <span style="font-size: 2rem;">📱</span>
-                        <span>Mobile App Dashboard Screenshot<br>(showing Quick Actions)</span>
+                    <div class="image-placeholder mobile-placeholder" style="padding:0; border:none; background:transparent; height:auto;">
+                        <img src="<?= base_url('assets/images/landing/mobile-timeline.png') ?>" alt="Mobile App Dashboard" style="width: 100%; border-radius: 30px; box-shadow: var(--shadow-md);">
                     </div>
                 </div>
             </div>
@@ -437,9 +438,8 @@
                     </ul>
                 </div>
                 <div class="showcase-image">
-                    <div class="image-placeholder mobile-placeholder">
-                        <span style="font-size: 2rem;">📱</span>
-                        <span>Mobile QR Scanner Screenshot<br>(showing Check-In process)</span>
+                    <div class="image-placeholder mobile-placeholder" style="padding:0; border:none; background:transparent; height:auto;">
+                        <img src="<?= base_url('assets/images/landing/mobile-scan.png') ?>" alt="Mobile QR Scanner" style="width: 100%; border-radius: 30px; box-shadow: var(--shadow-md);">
                     </div>
                 </div>
             </div>
@@ -455,9 +455,8 @@
                     </ul>
                 </div>
                 <div class="showcase-image">
-                    <div class="image-placeholder mobile-placeholder">
-                        <span style="font-size: 2rem;">📱</span>
-                        <span>Mobile Profile/Settings Screenshot<br>(showing employee details)</span>
+                    <div class="image-placeholder mobile-placeholder" style="padding:0; border:none; background:transparent; height:auto;">
+                        <img src="<?= base_url('assets/images/landing/mobile-profile.png') ?>" alt="Mobile Profile" style="width: 100%; border-radius: 30px; box-shadow: var(--shadow-md);">
                     </div>
                 </div>
             </div>

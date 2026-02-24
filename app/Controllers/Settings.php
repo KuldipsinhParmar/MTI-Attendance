@@ -30,6 +30,16 @@ class Settings extends BaseController
                 $this->model->saveSetting($key, $val);
             }
         }
+        
+        // Handle weekend days (array)
+        $weekendDays = $this->request->getPost('weekend_days');
+        if (is_array($weekendDays)) {
+            $this->model->saveSetting('weekend_days', json_encode($weekendDays));
+        } else {
+            // if unchecked all, save empty array
+            $this->model->saveSetting('weekend_days', json_encode([]));
+        }
+
         return redirect()->to('/settings')->with('success', 'Settings saved successfully.');
     }
 }

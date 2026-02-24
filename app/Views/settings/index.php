@@ -38,8 +38,28 @@
                            value="<?= esc($settings['default_geofence_radius'] ?? 50) ?>">
                     <div class="form-text">Applied to new QR codes unless overridden per location.</div>
                 </div>
+                <div class="col-12 mt-4">
+                    <label class="form-label fw-medium">Standard Weekend Days</label>
+                    <div class="form-text mb-2">Select the days that are considered weekends (non-working days).</div>
+                    <?php 
+                        $weekends = isset($settings['weekend_days']) ? json_decode($settings['weekend_days'], true) : ['Saturday', 'Sunday']; 
+                        if (!is_array($weekends)) $weekends = ['Saturday', 'Sunday'];
+                        $days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+                    ?>
+                    <div class="d-flex flex-wrap gap-3">
+                        <?php foreach($days as $day): ?>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" role="switch" name="weekend_days[]" value="<?= $day ?>" id="chk_<?= $day ?>"
+                                <?= in_array($day, $weekends) ? 'checked' : '' ?>>
+                            <label class="form-check-label" for="chk_<?= $day ?>">
+                                <?= $day ?>
+                            </label>
+                        </div>
+                        <?php endforeach; ?>
+                    </div>
+                </div>
             </div>
-            <div class="mt-4">
+            <div class="mt-4 border-top pt-4">
                 <button type="submit" class="btn btn-primary">
                     <i class="bi bi-save me-1"></i> Save Settings
                 </button>
